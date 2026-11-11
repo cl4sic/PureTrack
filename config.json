@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "naming": {
+    "current_pattern": "{artist}{feat} - {title}{remix}",
+    "active_preset": "Estándar EDM / Pop",
+    "presets": {
+      "Estándar EDM / Pop": "{artist}{feat} - {title}{remix}",
+      "Estricto Artista - Título": "{artist} - {title}",
+      "Álbum y Año": "{year} - {album} - {artist} - {title}{remix}",
+      "DJ Extended / Remix": "{artist}{feat} - {title} ({remix})"
+    }
+  },
+  "id3_mapping": {
+    "TIT2": "{title}{remix}",
+    "TPE1": "{all_artists}",
+    "TALB": "{album}",
+    "TPE2": "{album_artists}",
+    "TCON": "{genre}",
+    "TDRC": "{year}"
+  },
+  "audit_thresholds": {
+    "check_clipping": true,
+    "clipping_threshold_pct": 0.5,
+    "check_silence": true,
+    "silence_threshold_sec": 3.0,
+    "check_abrupt_ending": true,
+    "abrupt_rms_threshold_dbfs": -14.0,
+    "min_bitrate_kbps": 190,
+    "min_duration_sec": 60.0
+  },
+  "ui_preferences": {
+    "accent_theme": "amber",
+    "last_source_dir": "/home/cl4sic/Documents/Music",
+    "last_target_dir": "",
+    "dry_run_default": true,
+    "auto_backup": true,
+    "max_threads": 4
+  }
+}

@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-11-10T21:32:14.701676",
+  "timestamp": "2026-11-11T11:41:41.081396",
   "dry_run": false,
   "total_items": 7,
   "operations": [
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ DallasK_ Sasha Alex Sloan - Loop _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ DallasK_ Sasha Alex Sloan - Loop _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3",
+      "original_filename": "Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3",
       "new_filename": "Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3",
       "old_tags": {
         "TIT2": "Loop",
@@ -24,18 +24,18 @@
         "TCON": "Dance Pop",
         "TDRC": "2022"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     },
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ David Guetta_ Jamie Scott_ Romy Dya - So Far Away _feat. Jamie Scott _ Romy Dya_ _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ David Guetta_ Jamie Scott_ Romy Dya - So Far Away _feat. Jamie Scott _ Romy Dya_ _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix & David Guetta feat. Jamie Scott & Romy Dya - So Far Away.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & David Guetta feat. Jamie Scott & Romy Dya - So Far Away.mp3",
+      "original_filename": "Martin Garrix & David Guetta feat. Jamie Scott & Romy Dya - So Far Away.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & David Guetta feat. Jamie Scott & Romy Dya - So Far Away.mp3",
       "new_filename": "Martin Garrix & David Guetta feat. Jamie Scott & Romy Dya - So Far Away.mp3",
       "old_tags": {
-        "TIT2": "So Far Away (feat. Jamie Scott & Romy Dya)",
+        "TIT2": "So Far Away",
         "TPE1": "Martin Garrix, David Guetta, Jamie Scott, Romy Dya",
-        "TALB": "7: Anniversary Edition",
+        "TALB": "7",
         "TDRC": "2018",
         "TCON": "Future Bass",
         "TPE2": "David Guetta"
@@ -48,42 +48,18 @@
         "TCON": "Future Bass",
         "TDRC": "2018"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     },
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ Dawn Golden - Sun Is Never Going Down _feat. Dawn Golden_ _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ Dawn Golden - Sun Is Never Going Down _feat. Dawn Golden_ _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
-      "new_filename": "Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
-      "old_tags": {
-        "TIT2": "Sun Is Never Going Down (feat. Dawn Golden)",
-        "TPE1": "Martin Garrix, Dawn Golden",
-        "TALB": "Sun Is Never Going Down (feat. Dawn Golden)",
-        "TDRC": "2016",
-        "TCON": "Progressive House",
-        "TPE2": "Martin Garrix"
-      },
-      "new_tags": {
-        "TIT2": "Sun Is Never Going Down",
-        "TPE1": "Martin Garrix, Dawn Golden",
-        "TALB": "Seven",
-        "TPE2": "Martin Garrix",
-        "TCON": "Progressive House",
-        "TDRC": "2016"
-      },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
-      "executed": true
-    },
-    {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ Dua Lipa_ Brooks - Scared To Be Lonely - Brooks Remix _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ Dua Lipa_ Brooks - Scared To Be Lonely - Brooks Remix _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix & Dua Lipa - Scared To Be Lonely - Brooks Remix.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & Dua Lipa - Scared To Be Lonely - Brooks Remix.mp3",
+      "original_filename": "Martin Garrix & Dua Lipa - Scared To Be Lonely - Brooks Remix.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix & Dua Lipa - Scared To Be Lonely - Brooks Remix.mp3",
       "new_filename": "Martin Garrix & Dua Lipa - Scared To Be Lonely - Brooks Remix.mp3",
       "old_tags": {
         "TIT2": "Scared To Be Lonely - Brooks Remix",
         "TPE1": "Martin Garrix, Dua Lipa, Brooks",
-        "TALB": "Scared To Be Lonely Remixes Vol. 1",
+        "TALB": "Scared To Be Lonely (Remixes Vol. 1)",
         "TDRC": "2017",
         "TCON": "Future Bounce",
         "TPE2": "Martin Garrix, Dua Lipa"
@@ -96,37 +72,37 @@
         "TCON": "Future Bounce",
         "TDRC": "2017"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     },
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ Jex - Told You So _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ Jex - Told You So _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix feat. Jex - Told You So.mp3",
-      "new_filename": "Martin Garrix feat. Jex - Told You So.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
+      "original_filename": "Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
+      "new_filename": "Martin Garrix feat. Dawn Golden - Sun Is Never Going Down.mp3",
       "old_tags": {
-        "TIT2": "Told You So",
-        "TPE1": "Martin Garrix, Jex",
-        "TALB": "Told You So",
-        "TDRC": "2024",
-        "TCON": "Dance Pop",
+        "TIT2": "Sun Is Never Going Down",
+        "TPE1": "Martin Garrix, Dawn Golden",
+        "TALB": "Seven",
+        "TDRC": "2016",
+        "TCON": "Progressive House",
         "TPE2": "Martin Garrix"
       },
       "new_tags": {
-        "TIT2": "Told You So",
-        "TPE1": "Martin Garrix, Jex",
-        "TALB": "Told You So",
+        "TIT2": "Sun Is Never Going Down",
+        "TPE1": "Martin Garrix, Dawn Golden",
+        "TALB": "Seven",
         "TPE2": "Martin Garrix",
-        "TCON": "Dance Pop",
-        "TDRC": "2024"
+        "TCON": "Progressive House",
+        "TDRC": "2016"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     },
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ Jex_ Brooks - Told You So - Brooks Remix _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ Jex_ Brooks - Told You So - Brooks Remix _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix feat. Jex - Told You So - Brooks Remix.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Jex - Told You So - Brooks Remix.mp3",
+      "original_filename": "Martin Garrix feat. Jex - Told You So - Brooks Remix.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Jex - Told You So - Brooks Remix.mp3",
       "new_filename": "Martin Garrix feat. Jex - Told You So - Brooks Remix.mp3",
       "old_tags": {
         "TIT2": "Told You So - Brooks Remix",
@@ -144,17 +120,41 @@
         "TCON": "Future Bounce",
         "TDRC": "2025"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     },
     {
-      "original_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix_ Khalid - Ocean - Don Diablo Remix _SPOTISAVER.mp3",
-      "original_filename": "Martin Garrix_ Khalid - Ocean - Don Diablo Remix _SPOTISAVER.mp3",
-      "new_path": "/home/cl4sic/Documents/UBU/Adrian/Martin Garrix feat. Khalid - Ocean - Don Diablo Remix.mp3",
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Jex - Told You So.mp3",
+      "original_filename": "Martin Garrix feat. Jex - Told You So.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Jex - Told You So.mp3",
+      "new_filename": "Martin Garrix feat. Jex - Told You So.mp3",
+      "old_tags": {
+        "TIT2": "Told You So",
+        "TPE1": "Martin Garrix, Jex",
+        "TALB": "Told You So",
+        "TDRC": "2024",
+        "TCON": "Dance Pop",
+        "TPE2": "Martin Garrix"
+      },
+      "new_tags": {
+        "TIT2": "Told You So",
+        "TPE1": "Martin Garrix, Jex",
+        "TALB": "Told You So",
+        "TPE2": "Martin Garrix",
+        "TCON": "Dance Pop",
+        "TDRC": "2024"
+      },
+      "source": "Persistent SQLite Cache",
+      "executed": true
+    },
+    {
+      "original_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Khalid - Ocean - Don Diablo Remix.mp3",
+      "original_filename": "Martin Garrix feat. Khalid - Ocean - Don Diablo Remix.mp3",
+      "new_path": "/home/cl4sic/Documents/UBU/music-sanitizer-Cl4sic/Martin Garrix feat. Khalid - Ocean - Don Diablo Remix.mp3",
       "new_filename": "Martin Garrix feat. Khalid - Ocean - Don Diablo Remix.mp3",
       "old_tags": {
         "TIT2": "Ocean - Don Diablo Remix",
-        "TPE1": "Martin Garrix, Khalid",
+        "TPE1": "Martin Garrix, Khalid, Don Diablo",
         "TALB": "Reconstructions Part II",
         "TDRC": "2021",
         "TCON": "Future House",
@@ -168,7 +168,7 @@
         "TCON": "Future House",
         "TDRC": "2021"
       },
-      "source": "Local MusicBrainz/Discogs/RYM Expert Knowledgebase",
+      "source": "Persistent SQLite Cache",
       "executed": true
     }
   ]

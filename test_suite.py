@@ -134,5 +134,41 @@ class TestRollbackManifestIntegrity(unittest.TestCase):
             self.assertIn("new_tags", op)
 
 
+class TestModularAudioMasterCore(unittest.TestCase):
+    """Pruebas de la arquitectura modular AudioMaster (core y gui)."""
+
+    def test_config_manager_and_pattern_builder(self):
+        from core.config_manager import ConfigManager
+        cm = ConfigManager()
+        self.assertIsNotNone(cm.config_data)
+        pattern = "{artist}{feat} - {title}{remix}"
+        rendered = ConfigManager.render_pattern(pattern)
+        self.assertIn("Martin Garrix", rendered)
+        self.assertIn("Loop", rendered)
+        self.assertTrue(rendered.endswith(".mp3"))
+
+    def test_modular_resolver(self):
+        from core.resolver import MetadataResolver
+        resolver = MetadataResolver()
+        p = Path("Martin Garrix feat. Jex - Told You So.mp3")
+        res = resolver.resolve_track_metadata(p)
+        self.assertEqual(res.title, "Told You So")
+        self.assertIn("Martin Garrix", res.main_artists)
+        self.assertIn("Jex", res.feat_artists)
+
+    def test_worker_instantiation_and_concurrency(self):
+        from gui.workers import AuditWorker, EnrichWorker
+        p = Path("Martin Garrix feat. Jex - Told You So.mp3")
+        worker = AuditWorker([p])
+        self.assertFalse(worker.is_paused())
+        self.assertFalse(worker.is_cancelled())
+        worker.pause()
+        self.assertTrue(worker.is_paused())
+        worker.resume()
+        self.assertFalse(worker.is_paused())
+        worker.cancel()
+        self.assertTrue(worker.is_cancelled())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

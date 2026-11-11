@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""
+gui/widgets/pattern_builder.py - Constructor Visual de Patrones Dinámicos.
+
+Permite:
+- Edición libre del patrón con tokens dinámicos ({artist}, {feat}, {title}, etc.).
+- Inserción rápida mediante botones / chips interactivos.
+- Selección de presets guardados.
+- Previsualización dinámica en tiempo real con una pista de prueba.
+"""
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QComboBox,
+    QFrame,
+    QScrollArea
+)
+from PySide6.QtCore import Qt, Signal
+from core.config_manager import ConfigManager, SAMPLE_TRACK
+
+
+class PatternBuilder(QWidget):
+    """Componente interactivo para construir patrones de renombrado y previsualizarlos en vivo."""
+
+    pattern_changed = Signal(str)
+
+    TOKENS = [
+        ("{artist}", "Artista"),
+        ("{feat}", "Feat"),
+        ("{guest}", "Guest"),
+        ("{title}", "Título"),
+        ("{remix}", "Remix"),
+        ("{album}", "Álbum"),
+        ("{year}", "Año"),
+        ("{genre}", "Género"),
+    ]
+
+    def __init__(self, config_manager: ConfigManager, parent=None):
+        super().__init__(parent)
+        self.config_manager = config_manager
+        self._init_ui()
+
+    def _init_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+
+        # 1. Selector de Presets
+        preset_layout = QHBoxLayout()
+        preset_layout.addWidget(QLabel("Preset:"))
+        self.preset_combo = QComboBox()
+        presets = self.config_manager.get("naming", "presets", {})
+        active_preset = self.config_manager.get("naming", "active_preset", "Estándar EDM / Pop")
+        for p_name in presets.keys():
+            self.preset_combo.addItem(p_name)
+        if active_preset in presets:
+            self.preset_combo.setCurrentText(active_preset)
+        self.preset_combo.currentTextChanged.connect(self._on_preset_selected)
+        preset_layout.addWidget(self.preset_combo, stretch=1)
+        layout.addLayout(preset_layout)
+
+        # 2. Campo de entrada de patrón
+        self.pattern_input = QLineEdit()
+        current_pattern = self.config_manager.get_pattern()
+        self.pattern_input.setText(current_pattern)
+        self.pattern_input.setPlaceholderText("Ej: {artist}{feat} - {title}{remix}")
+        self.pattern_input.textChanged.connect(self._on_pattern_text_changed)
+        layout.addWidget(self.pattern_input)
+
+        # 3. Chips / Botones con tokens dinámicos
+        chips_label = QLabel("Tokens dinámicos (clic para insertar):")
+        chips_label.setStyleSheet("color: #8b8e98; font-size: 11px;")
+        layout.addWidget(chips_label)
+
+        chips_layout = QHBoxLayout()
+        chips_layout.setSpacing(5)
+        chips_layout.setContentsMargins(0, 0, 0, 0)
+
+        for token, tooltip in self.TOKENS:
+            btn = QPushButton(token)
+            btn.setToolTip(f"Insertar {tooltip}")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #2a2c33;
+                    color: #d1d5db;
+                    border: 1px solid #373a44;
+                    border-radius: 11px;
+                    padding: 3px 8px;
+                    font-size: 11px;
+                    font-family: monospace;
+                }
+                QPushButton:hover {
+                    background-color: #373a44;
+                    border-color: #ff9800;
+                    color: #ffffff;
+                }
+                QPushButton:pressed {
+                    background-color: #ff9800;
+                    color: #000000;
+                }
+            """)
+            btn.clicked.connect(lambda checked=False, t=token: self._insert_token(t))
+            chips_layout.addWidget(btn)
+
+        chips_layout.addStretch()
+        layout.addLayout(chips_layout)
+
+        # 4. Tarjeta de Previsualización dinámica en vivo
+        preview_box = QFrame()
+        preview_box.setStyleSheet("""
+            QFrame {
+                background-color: #1a1b1f;
+                border: 1px solid #2e3036;
+                border-radius: 6px;
+                padding: 6px;
+            }
+        """)
+        pb_layout = QVBoxLayout(preview_box)
+        pb_layout.setContentsMargins(8, 6, 8, 6)
+        pb_layout.setSpacing(4)
+
+        prev_header = QLabel("Previsualización en tiempo real:")
+        prev_header.setStyleSheet("color: #ff9800; font-size: 11px; font-weight: bold;")
+        pb_layout.addWidget(prev_header)
+
+        self.preview_label = QLabel()
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet("color: #f0f0f0; font-family: monospace; font-size: 12px;")
+        pb_layout.addWidget(self.preview_label)
+
+        layout.addWidget(preview_box)
+
+        # Actualizar previsualización inicial
+        self._update_preview(self.pattern_input.text())
+
+    def _insert_token(self, token: str):
+        """Inserta el token en la posición actual del cursor."""
+        current_text = self.pattern_input.text()
+        cursor_pos = self.pattern_input.cursorPosition()
+        new_text = current_text[:cursor_pos] + token + current_text[cursor_pos:]
+        self.pattern_input.setText(new_text)
+        self.pattern_input.setCursorPosition(cursor_pos + len(token))
+        self.pattern_input.setFocus()
+
+    def _on_preset_selected(self, preset_name: str):
+        presets = self.config_manager.get("naming", "presets", {})
+        if preset_name in presets:
+            pattern = presets[preset_name]
+            self.pattern_input.setText(pattern)
+            self.config_manager.set_pattern(pattern, preset_name)
+
+    def _on_pattern_text_changed(self, text: str):
+        self._update_preview(text)
+        self.config_manager.set_pattern(text)
+        self.pattern_changed.emit(text)
+
+    def _update_preview(self, pattern: str):
+        rendered = ConfigManager.render_pattern(pattern, SAMPLE_TRACK)
+        self.preview_label.setText(rendered)
+
+    def get_pattern(self) -> str:
+        return self.pattern_input.text().strip()

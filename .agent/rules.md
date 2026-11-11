@@ -1,15 +1,17 @@
-# Directrices de Operación del Agente de Audio
+# Directrices del Agente: Audio Desktop Architect
 
-## Rol y Objetivo
-Eres un ingeniero de procesamiento de audio y curador musical especializado en scripting de automatización en Python. Tu meta es auditar, sanear, identificar y renombrar una colección de MP3 en la raíz del proyecto.
+## 1. Modo de Autonomía y Consultas
+- **Implementación Autónoma:** Genera toda la lógica de backend, concurrencia (QThreads), manejo de audio, llamadas a FFmpeg, parsing ID3v2, gestión de archivos y compatibilidad entre sistemas operativos sin pedir confirmación.
+- **Protocolo de Consulta Obligatoria (Pausar y Preguntar):**
+  Pausa la ejecución y formula una pregunta concisa al usuario **ÚNICAMENTE** en los siguientes casos:
+  1. *Decisiones visuales o ergonómicas no especificadas:* (Ejemplo: elegir entre pestañas superiores o panel lateral colapsable, o seleccionar entre la paleta ámbar AIMP clásico vs cian moderno).
+  2. *Casos límite de metadatos:* Si una regla de precedencia choca (ej: ¿qué hacer si una canción solo existe en YouTube y no hay datos de género en Rate Your Music?).
+  3. *Acciones destructivas:* Antes de borrar archivos en disco en caso de tracks irrecuperables.
 
-## Principios Críticos de Ejecución
-1. **Seguridad ante todo:** Nunca sobreescribas ni renombres un archivo sin antes generar una copia de respaldo o registrar su estado original en un mapeo JSON (`backup_manifest.json`).
-2. **Modularidad en dos fases:**
-   - **Fase 1 (Diagnóstico):** Inspección pasiva, cálculo de bitrate, duración, clipping, anomalías y reporte detallado (`informe_auditoria.csv` y `informe_auditoria.md`). No modificar archivos en esta fase.
-   - **Fase 2 (Enriquecimiento y Renombrado):** Solo para archivos aprobados o bajo confirmación. Uso de APIs/Scraping (MusicBrainz, Spotify, Rate Your Music) para estandarizar tags ID3v2 y nombres.
-3. **Manejo Determinista de Audio:**
-   - Usa `ffmpeg -v error -i <file> -f null -` para detectar errores reales de decodificación.
-   - Usa `mutagen` para la lectura/escritura limpia de etiquetas ID3v2.3 o ID3v2.4 UTF-8.
-   - Para cortes bruscos, evalúa los últimos 500 ms de audio: si el RMS supera los -14 dBFS sin decaimiento antes del EOF, marca como corte abrupto.
-   - Para clipping, detecta muestras continuas en digital full scale (>= 0.999 / 0 dBFS).
+## 2. Estándares de Código y Robustez
+- **GUI No Bloqueante:** Toda tarea de I/O pesada (FFmpeg, mutagen, requests web) DEBE ejecutarse en workers de `QThread`. Nunca usar `time.sleep` ni operaciones síncronas en el hilo principal (`MainThread`).
+- **Seguridad en Sistemas de Archivos:**
+  - Usar siempre `pathlib.Path`.
+  - En Windows, aplicar saneamiento contra caracteres ilegales en NTFS: `< > : " / \ | ? *`.
+  - Todo log, configuración y base de datos debe serializarse en **UTF-8 explícito**.
+- **Gestión de Configuración:** Las preferencias de usuario (patrones de nombres, umbrales de bitrate, flags de auditoría activas) deben guardarse en un archivo `config.json` persistente en la carpeta de datos de usuario estándar (`QStandardPaths.AppConfigLocation`).
