@@ -73,7 +73,8 @@ def prepare_and_zip():
             shutil.copy2(src_bin_file, dst_bin_file)
             print(f"[+] Copiado binario: {b_name}")
 
-    # 2. Copiar código fuente y documentación actualizada
+    # 2. Copiar código fuente, scripts de lanzamiento y documentación actualizada
+    win_scripts_dir = ROOT_DIR / "package" / "windows_scripts"
     files_to_copy = [
         (ROOT_DIR / "app.py", DIST_WIN_DIR / "app.py"),
         (ROOT_DIR / "requirements.txt", DIST_WIN_DIR / "requirements.txt"),
@@ -81,6 +82,9 @@ def prepare_and_zip():
         (ROOT_DIR / "MANUAL_USUARIO.md", DIST_WIN_DIR / "MANUAL_USUARIO.md"),
         (ROOT_DIR / "README.md", DIST_WIN_DIR / "README.md"),
         (ROOT_DIR / "README_ES.md", DIST_WIN_DIR / "README_ES.md"),
+        (win_scripts_dir / "iniciar_AudioMaster.bat", DIST_WIN_DIR / "iniciar_AudioMaster.bat"),
+        (win_scripts_dir / "compilar_exe_en_windows.bat", DIST_WIN_DIR / "compilar_exe_en_windows.bat"),
+        (win_scripts_dir / "INSTRUCCIONES_WINDOWS.txt", DIST_WIN_DIR / "INSTRUCCIONES_WINDOWS.txt"),
     ]
 
     for src, dst in files_to_copy:

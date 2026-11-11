@@ -1,0 +1,42 @@
+========================================================================
+ AUDIOMASTER SUITE - INSTRUCCIONES DE USO PARA WINDOWS
+========================================================================
+
+¡Bienvenido a AudioMaster Suite!
+Esta distribución incluye todo lo necesario para auditar, reparar,
+normalizar y renombrar tu colección de música MP3 de forma 100% segura.
+
+------------------------------------------------------------------------
+ 1. INICIO RÁPIDO (EN 1 CLIC)
+------------------------------------------------------------------------
+Simplemente haz DOBLE CLIC en:
+   -->  iniciar_AudioMaster.bat
+
+El lanzador verificará automáticamente los componentes necesarios
+e iniciará la interfaz gráfica estilo AIMP.
+
+------------------------------------------------------------------------
+ 2. BINARIOS EXTERNOS INCLUIDOS
+------------------------------------------------------------------------
+La carpeta 'bin/' ya incluye las versiones estáticas optimizadas para Windows:
+   - bin/ffmpeg.exe   (Decodificación e integridad de audio)
+   - bin/ffprobe.exe  (Detección precisa de bitrate CBR/VBR)
+   - bin/fpcalc.exe   (Cálculo de huellas acústicas Chromaprint)
+No necesitas descargar ni configurar nada adicional.
+
+------------------------------------------------------------------------
+ 3. COMPILAR COMO EJECUTABLE (.EXE) INDEPENDIENTE
+------------------------------------------------------------------------
+Si deseas generar un ejecutable .exe totalmente independiente:
+   -->  Haz doble clic en: compilar_exe_en_windows.bat
+
+El ejecutable resultante se creará en:
+   dist\AudioMaster\AudioMaster.exe
+
+------------------------------------------------------------------------
+ 4. DOCUMENTACIÓN COMPLETA
+------------------------------------------------------------------------
+Consulta los manuales detallados incluidos en este paquete:
+   - MANUAL_USUARIO.md (Guía completa en Español)
+   - USER_MANUAL.md    (Full user guide in English)
+========================================================================
