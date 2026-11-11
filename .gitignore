@@ -1,10 +1,23 @@
-cat << 'EOF' > .gitignore
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# PyInstaller & Build artifacts
 dist/
 build/
-bin/
+*.spec
+
+# Caches and logs
+output/metadata_cache.db
+.write_test
+
+# Binaries and packages
 *.zip
 *.exe
 *.so
-.venv/
-__pycache__/
-EOF
+bin/
+AudioMaster_Windows/
+*.mp3

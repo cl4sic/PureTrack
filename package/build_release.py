@@ -46,14 +46,25 @@ def build_release(mode: str = "onedir", windowed: bool = True):
     sep = ";" if is_windows else ":"
     target_name = "AudioMaster"
 
-    # Preparar parámetros de PyInstaller
+    # Preparar parámetros de PyInstaller optimizados
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--noconfirm",
         "--clean",
         "--name", target_name,
         f"--{mode}",
-        "--collect-all", "PySide6",
+        "--hidden-import", "PySide6.QtCore",
+        "--hidden-import", "PySide6.QtGui",
+        "--hidden-import", "PySide6.QtWidgets",
+        "--exclude-module", "PySide6.QtWebEngineCore",
+        "--exclude-module", "PySide6.QtWebEngineWidgets",
+        "--exclude-module", "PySide6.QtWebEngineQuick",
+        "--exclude-module", "PySide6.QtQml",
+        "--exclude-module", "PySide6.QtQuick",
+        "--exclude-module", "PySide6.Qt3DCore",
+        "--exclude-module", "PySide6.Qt3DRender",
+        "--exclude-module", "tkinter",
+        "--exclude-module", "matplotlib",
         "--collect-all", "mutagen",
         "--collect-all", "soundfile",
         "--collect-all", "numpy",

@@ -1,0 +1,11 @@
+# Enforce CRLF on Windows scripts and text files
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Common text and markdown files
+*.txt text eol=crlf
+*.md text eol=lf
+*.py text eol=lf
+*.qss text eol=lf
+*.json text eol=lf

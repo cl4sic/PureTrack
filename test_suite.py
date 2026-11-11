@@ -14,8 +14,8 @@ import unittest
 from pathlib import Path
 import json
 
-from common_utils import sanitize_windows_filename, resolve_binary, WINDOWS_RESERVED_NAMES
-from enrich_metadata import MetadataEnricher, ResolvedMetadata
+from core.common_utils import sanitize_windows_filename, resolve_binary, WINDOWS_RESERVED_NAMES
+from core.resolver import MetadataResolver, ResolvedMetadata
 
 
 class TestWindowsSanitization(unittest.TestCase):
@@ -88,7 +88,7 @@ class TestMetadataEnrichmentRules(unittest.TestCase):
     """Pruebas de formato de nombres y estructura de etiquetas ID3v2."""
 
     def setUp(self):
-        self.enricher = MetadataEnricher()
+        self.enricher = MetadataResolver()
 
     def test_format_conventions(self):
         # Formato de referencia 1: Martin Garrix & DallasK feat. Sasha Alex Sloan - Loop.mp3

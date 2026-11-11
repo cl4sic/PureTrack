@@ -128,23 +128,23 @@ class ProgressPanel(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(8)
 
-        self.btn_audit = QPushButton("🔍 Auditar Biblioteca")
+        self.btn_audit = QPushButton("Auditar Biblioteca")
         self.btn_audit.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_audit.clicked.connect(self.audit_requested.emit)
         actions_layout.addWidget(self.btn_audit)
 
-        self.btn_dry_run = QPushButton("📋 Simular (Dry-Run)")
+        self.btn_dry_run = QPushButton("Simular (Dry-Run)")
         self.btn_dry_run.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_dry_run.clicked.connect(self.dry_run_requested.emit)
         actions_layout.addWidget(self.btn_dry_run)
 
-        self.btn_apply = QPushButton("⚡ Aplicar en Disco")
+        self.btn_apply = QPushButton("Aplicar en Disco")
         self.btn_apply.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_apply.setObjectName("btnApply")
         self.btn_apply.clicked.connect(self.apply_requested.emit)
         actions_layout.addWidget(self.btn_apply)
 
-        self.btn_rollback = QPushButton("↩ Deshacer (Rollback)")
+        self.btn_rollback = QPushButton("Deshacer (Rollback)")
         self.btn_rollback.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_rollback.clicked.connect(self.rollback_requested.emit)
         actions_layout.addWidget(self.btn_rollback)
@@ -152,13 +152,13 @@ class ProgressPanel(QWidget):
         actions_layout.addSpacing(15)
 
         # Controles de Flujo de Trabajo
-        self.btn_pause = QPushButton("⏸ Pausar")
+        self.btn_pause = QPushButton("Pausar")
         self.btn_pause.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_pause.setEnabled(False)
         self.btn_pause.clicked.connect(self._toggle_pause)
         actions_layout.addWidget(self.btn_pause)
 
-        self.btn_cancel = QPushButton("⏹ Cancelar")
+        self.btn_cancel = QPushButton("Cancelar")
         self.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cancel.setEnabled(False)
         self.btn_cancel.clicked.connect(self.cancel_requested.emit)
@@ -167,7 +167,7 @@ class ProgressPanel(QWidget):
         actions_layout.addStretch()
 
         # Botón colapsar/expandir consola
-        self.btn_toggle_log = QPushButton("📟 Consola ▼")
+        self.btn_toggle_log = QPushButton("Consola ▼")
         self.btn_toggle_log.setCheckable(True)
         self.btn_toggle_log.setChecked(True)
         self.btn_toggle_log.setStyleSheet("font-size: 11px; padding: 4px 8px;")
@@ -198,16 +198,16 @@ class ProgressPanel(QWidget):
     def _toggle_pause(self):
         if not self._is_paused:
             self._is_paused = True
-            self.btn_pause.setText("▶ Reanudar")
+            self.btn_pause.setText("Reanudar")
             self.pause_requested.emit()
         else:
             self._is_paused = False
-            self.btn_pause.setText("⏸ Pausar")
+            self.btn_pause.setText("Pausar")
             self.resume_requested.emit()
 
     def _toggle_log_console(self, checked: bool):
         self.log_console.setVisible(checked)
-        self.btn_toggle_log.setText("📟 Consola ▼" if checked else "📟 Consola ▲")
+        self.btn_toggle_log.setText("Consola ▼" if checked else "Consola ▲")
 
     def set_operation_active(self, active: bool):
         """Habilita o deshabilita botones según si hay una tarea en curso."""
@@ -220,7 +220,7 @@ class ProgressPanel(QWidget):
         self.btn_cancel.setEnabled(active)
         if not active:
             self._is_paused = False
-            self.btn_pause.setText("⏸ Pausar")
+            self.btn_pause.setText("Pausar")
 
     def update_item_progress(self, current_step: int, total_steps: int, step_desc: str):
         pct = int((current_step / total_steps) * 100) if total_steps > 0 else 0

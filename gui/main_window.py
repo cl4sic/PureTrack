@@ -169,18 +169,20 @@ class MainWindow(QMainWindow):
         self.path_input.returnPressed.connect(self._on_path_entered)
         top_layout.addWidget(self.path_input, stretch=1)
 
-        btn_browse = QPushButton("📁 Examinar...")
+        btn_browse = QPushButton("Examinar...")
+        btn_browse.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogOpenButton))
         btn_browse.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_browse.clicked.connect(self._browse_directory)
         top_layout.addWidget(btn_browse)
 
-        btn_refresh = QPushButton("🔄 Recargar")
+        btn_refresh = QPushButton("Recargar")
+        btn_refresh.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_BrowserReload))
         btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_refresh.clicked.connect(self._reload_current_directory)
         top_layout.addWidget(btn_refresh)
 
         # Selector de Tema (Ámbar / Cian)
-        self.btn_theme = QPushButton("🎨 Tema: Ámbar")
+        self.btn_theme = QPushButton("Tema: Ámbar")
         self.btn_theme.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_theme.clicked.connect(self._toggle_theme)
         top_layout.addWidget(self.btn_theme)
@@ -596,15 +598,15 @@ class MainWindow(QMainWindow):
         data = self.tracks_data.get(fpath, {})
 
         menu = QMenu(self)
-        action_inspect = QAction("🔍 Inspeccionar detalles técnicos", self)
+        action_inspect = QAction("Inspeccionar detalles técnicos", self)
         action_inspect.triggered.connect(lambda: self._inspect_track(data))
         menu.addAction(action_inspect)
 
-        action_edit = QAction("✏ Editar manualmente nombre proyectado", self)
+        action_edit = QAction("Editar manualmente nombre proyectado", self)
         action_edit.triggered.connect(lambda: self._edit_track_manually(row, data))
         menu.addAction(action_edit)
 
-        action_exclude = QAction("✖ Excluir del lote" if not data.get("excluded", False) else "✔ Re-incluir en el lote", self)
+        action_exclude = QAction("Excluir del lote" if not data.get("excluded", False) else "Re-incluir en el lote", self)
         action_exclude.triggered.connect(lambda: self._toggle_exclude_track(row, data))
         menu.addAction(action_exclude)
 
@@ -682,7 +684,7 @@ class MainWindow(QMainWindow):
         current_theme = self.config_manager.get("ui_preferences", "accent_theme", "amber")
         new_theme = "cyan" if current_theme == "amber" else "amber"
         self.config_manager.set("ui_preferences", "accent_theme", new_theme)
-        self.btn_theme.setText("🎨 Tema: Cian" if new_theme == "cyan" else "🎨 Tema: Ámbar")
+        self.btn_theme.setText("Tema: Cian" if new_theme == "cyan" else "Tema: Ámbar")
         app = QApplication.instance()
         if app:
             app.setStyleSheet(load_stylesheet(new_theme))
