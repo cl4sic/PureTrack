@@ -1,0 +1,29 @@
+================================================================================
+ GUIA RÁPIDA - AUDIOSANITIZER (WINDOWS)
+================================================================================
+
+Esta carpeta contiene todo lo necesario para auditar, normalizar metadatos
+y renombrar colecciones de archivos MP3 en Windows de forma automatica y segura.
+
+INSTRUCCIONES DE USO:
+--------------------------------------------------------------------------------
+1. Coloca tus archivos .mp3 en esta misma carpeta (junto a ejecutar_auditoria_y_renombrado.bat).
+
+2. Haz DOBLE CLIC en:
+      ejecutar_auditoria_y_renombrado.bat
+
+3. Elige la opcion deseada del menu en pantalla:
+      [1] Auditar Coleccion (Analiza errores, bitrate, silencios y cortes sin modificar nada)
+      [2] Simular Renombrado (Muestra que nombres y etiquetas cambiarian)
+      [3] Aplicar Renombrado y Metadatos Oficiales (Aplica los cambios en disco)
+      [4] Deshacer Cambios (Restaura los nombres y tags originales mediante rollback)
+      [5] Salir
+
+NOTAS TECNICAS:
+--------------------------------------------------------------------------------
+- Los binarios necesarios (ffmpeg.exe, ffprobe.exe, fpcalc.exe) ya estan incluidos
+  y configurados dentro de la carpeta bin/. No necesitas configurar variables de entorno.
+- Todos los informes y respaldos se guardaran automaticamente en la carpeta output/.
+- Si deseas generar un ejecutable unico (.exe), puedes hacer doble clic en:
+  compilar_exe_en_windows.bat (requiere Python en el equipo).
+================================================================================

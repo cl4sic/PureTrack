@@ -1,0 +1,10 @@
+cat << 'EOF' > .gitignore
+dist/
+build/
+bin/
+*.zip
+*.exe
+*.so
+.venv/
+__pycache__/
+EOF
