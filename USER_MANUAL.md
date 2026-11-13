@@ -171,13 +171,37 @@ python package/build_release.py --mode onedir
 ```
 
 ### Running on Windows
-Download `AudioMaster_Windows.zip`, extract it anywhere, and double-click:
-- **`iniciar_AudioMaster.bat`**: 1-click launcher.
-- Or compile a standalone native `.exe` by double-clicking **`compilar_exe_en_windows.bat`**.
+1. Download and extract `AudioMaster_Windows.zip`.
+2. Double-click **`compilar_exe_en_windows.bat`**:
+   - Installs dependencies and PyInstaller in 1 click.
+   - Generates the standalone executable in `dist\AudioMaster\AudioMaster.exe`.
+   - Asks if you want to open AudioMaster immediately (type `S` or `Y`).
+3. For daily execution, double-click:
+   - **`ejecutar_AudioMaster.bat`** (or open `dist\AudioMaster\AudioMaster.exe` directly).
 
 ---
 
-## 6. Troubleshooting & FAQ
+## 6. Advanced Interface Features
+
+### Interactive Resizable Columns
+- All table columns can be freely resized: click and drag any header divider to adjust widths for long titles or original filenames.
+- **Auto-fit:** Double-click any header divider to instantly fit that column to the longest text content.
+- **Horizontal Scrolling:** Smooth horizontal scrolling allows expanding columns without squishing information.
+
+### Custom Presets Manager (Create, Save & Delete)
+- **Create New Preset (`+ Nuevo`):** Assemble your pattern tokens and click `+ Nuevo`. Enter a custom preset name to save it permanently into `config.json`.
+- **Save Changes (`Guardar`):** Modify the current pattern and click `Guardar` to update that preset.
+- **Delete Preset (`Borrar`):** Delete obsolete presets (at least one preset is always safely preserved).
+
+### Custom Song Name Overrides (Disk Protection)
+- **Quick In-Place Editing:** Double-click directly on the **"Nombre Proyectado" (Projected Name)** cell for any track (or right-click -> *✏️ Asignar nombre personalizado...*).
+- **Overwrite Protection:** Custom filenames are highlighted in **amber** and locked. Changing inspector patterns or running automatic audits will NOT overwrite your custom names.
+- **Applying to Disk:** When clicking **[Aplicar en Disco]**, tracks with custom names are renamed on disk to the exact filename you chose.
+- **Revert:** Right-click the track and select *🔄 Restablecer a patrón automático* if you wish to return to the automatic template.
+
+---
+
+## 7. Troubleshooting & FAQ
 
 **Q: Why were some icons showing up as empty squares (`▯`) on Linux?**  
 A: Certain Linux desktop environments (such as COSMIC DE or minimal window managers without `noto-fonts-emoji`) do not map Unicode emoji glyphs by default. AudioMaster uses clean Qt standard vector icons and universal typography to guarantee crisp rendering on all platforms.

@@ -13,6 +13,7 @@ import sys
 import os
 import shutil
 import re
+import subprocess
 from pathlib import Path
 from typing import Optional, Union, List
 
@@ -161,3 +162,38 @@ def resolve_binary(binary_name: str, search_dir: Optional[Union[str, Path]] = No
 
     # Fallback predeterminado si no se localiza
     return binary_name
+
+
+def get_hidden_subprocess_kwargs() -> dict:
+    """
+    Retorna los flags de creación y startupinfo necesarios para evitar que aparezcan
+    ventanas negras de consola emergentes en Windows al ejecutar subprocesos
+    (como ffmpeg.exe, ffprobe.exe, fpcalc.exe).
+    """
+    kwargs = {}
+    if sys.platform == "win32" or sys.platform.startswith("win"):
+        # CREATE_NO_WINDOW = 0x08000000
+        create_no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        kwargs["creationflags"] = create_no_window
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0  # SW_HIDE
+        kwargs["startupinfo"] = startupinfo
+    return kwargs
+
+
+def run_hidden_subprocess(cmd: Union[List[str], str], **kwargs) -> subprocess.CompletedProcess:
+    """
+    Ejecuta un subproceso de forma silenciosa garantizando que en Windows
+    no aparezca ninguna ventana de consola negra parpadeante (cmd.exe).
+    """
+    hidden_kwargs = get_hidden_subprocess_kwargs()
+    if "creationflags" in kwargs and "creationflags" in hidden_kwargs:
+        kwargs["creationflags"] |= hidden_kwargs["creationflags"]
+    elif "creationflags" in hidden_kwargs:
+        kwargs["creationflags"] = hidden_kwargs["creationflags"]
+
+    if "startupinfo" not in kwargs and "startupinfo" in hidden_kwargs:
+        kwargs["startupinfo"] = hidden_kwargs["startupinfo"]
+
+    return subprocess.run(cmd, **kwargs)

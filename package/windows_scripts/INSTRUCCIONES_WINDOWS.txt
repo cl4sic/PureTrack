@@ -1,42 +1,49 @@
-========================================================================
- AUDIOMASTER SUITE - INSTRUCCIONES DE USO PARA WINDOWS
-========================================================================
+================================================================================
+                  AUDIOMASTER SUITE - GUÍA RÁPIDA DE WINDOWS
+================================================================================
 
-¡Bienvenido a AudioMaster Suite!
-Esta distribución incluye todo lo necesario para auditar, reparar,
-normalizar y renombrar tu colección de música MP3 de forma 100% segura.
+¡Bienvenido a AudioMaster Suite! Sigue estos sencillos pasos para compilar y
+ejecutar la aplicación en Windows de la forma más rápida y directa:
 
-------------------------------------------------------------------------
- 1. INICIO RÁPIDO (EN 1 CLIC)
-------------------------------------------------------------------------
-Simplemente haz DOBLE CLIC en:
-   -->  iniciar_AudioMaster.bat
+--------------------------------------------------------------------------------
+PASO 1: COMPILAR Y EJECUTAR (1 SOLO CLIC)
+--------------------------------------------------------------------------------
+1. Haz doble clic sobre el archivo:
+   
+   👉 compilar_exe_en_windows.bat
 
-El lanzador verificará automáticamente los componentes necesarios
-e iniciará la interfaz gráfica estilo AIMP.
+2. El asistente comprobará Python, instalará las dependencias necesarias y
+   generará automáticamente el ejecutable portátil sin necesidad de comandos.
 
-------------------------------------------------------------------------
- 2. BINARIOS EXTERNOS INCLUIDOS
-------------------------------------------------------------------------
-La carpeta 'bin/' ya incluye las versiones estáticas optimizadas para Windows:
-   - bin/ffmpeg.exe   (Decodificación e integridad de audio)
-   - bin/ffprobe.exe  (Detección precisa de bitrate CBR/VBR)
-   - bin/fpcalc.exe   (Cálculo de huellas acústicas Chromaprint)
-No necesitas descargar ni configurar nada adicional.
+3. Al finalizar, la consola te preguntará si deseas abrir AudioMaster inmediatamente.
+   Escribe "S" y pulsa Enter.
 
-------------------------------------------------------------------------
- 3. COMPILAR COMO EJECUTABLE (.EXE) INDEPENDIENTE
-------------------------------------------------------------------------
-Si deseas generar un ejecutable .exe totalmente independiente:
-   -->  Haz doble clic en: compilar_exe_en_windows.bat
+--------------------------------------------------------------------------------
+PASO 2: EJECUTAR EN EL FUTURO
+--------------------------------------------------------------------------------
+Una vez compilado, puedes abrir la aplicación de dos formas muy sencillas:
 
-El ejecutable resultante se creará en:
-   dist\AudioMaster\AudioMaster.exe
+OPCIÓN A (Recomendada):
+   Haz doble clic sobre:
+   👉 ejecutar_AudioMaster.bat
 
-------------------------------------------------------------------------
- 4. DOCUMENTACIÓN COMPLETA
-------------------------------------------------------------------------
-Consulta los manuales detallados incluidos en este paquete:
-   - MANUAL_USUARIO.md (Guía completa en Español)
-   - USER_MANUAL.md    (Full user guide in English)
-========================================================================
+OPCIÓN B:
+   Entra en la carpeta generada:
+   👉 dist\AudioMaster\AudioMaster.exe
+   (Puedes crear un acceso directo en tu Escritorio a este archivo .exe).
+
+--------------------------------------------------------------------------------
+REQUISITO PREVIO (Solo si aún no tienes Python en tu PC):
+--------------------------------------------------------------------------------
+- Si no tienes Python instalado, descárgalo gratis desde:
+  https://www.python.org/downloads/
+- IMPORTANTE: Durante la instalación, marca la casilla inferior:
+  [✔] "Add python.exe to PATH"
+
+--------------------------------------------------------------------------------
+BINARIOS PORTABLES DE AUDIO (FFmpeg, FFprobe, fpcalc):
+--------------------------------------------------------------------------------
+Los binarios de procesamiento de audio de alta velocidad (ffmpeg.exe, ffprobe.exe
+y fpcalc.exe) ya vienen pre-incluidos en la carpeta "bin\" de este paquete, por
+lo que NO necesitas descargar nada adicional para auditar o masterizar pistas.
+================================================================================

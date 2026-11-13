@@ -21,9 +21,12 @@ class AudioBadge(QWidget):
     COLORS = {
         "APTA": {"bg": "rgba(76, 175, 80, 0.18)", "border": "#4caf50", "text": "#81c784", "icon": "●"},
         "REVISIÓN MANUAL": {"bg": "rgba(255, 193, 7, 0.18)", "border": "#ffc107", "text": "#ffd54f", "icon": "▲"},
+        "ALERTA": {"bg": "rgba(255, 193, 7, 0.18)", "border": "#ffc107", "text": "#ffd54f", "icon": "▲"},
         "CANDIDATA A ELIMINACIÓN": {"bg": "rgba(244, 67, 54, 0.18)", "border": "#f44336", "text": "#e57373", "icon": "✖"},
+        "ERROR": {"bg": "rgba(244, 67, 54, 0.18)", "border": "#f44336", "text": "#e57373", "icon": "✖"},
         "PENDIENTE": {"bg": "rgba(96, 125, 139, 0.18)", "border": "#607d8b", "text": "#b0bec5", "icon": "○"},
         "APLICADO": {"bg": "rgba(0, 180, 216, 0.18)", "border": "#00b4d8", "text": "#90e0ef", "icon": "✔"},
+        "EXCLUIDA": {"bg": "rgba(100, 100, 100, 0.18)", "border": "#555555", "text": "#888888", "icon": "⊘"},
     }
 
     def __init__(self, status: str = "PENDIENTE", parent=None):
@@ -41,7 +44,18 @@ class AudioBadge(QWidget):
     def set_status(self, status: str):
         st = status.upper().strip()
         cfg = self.COLORS.get(st, self.COLORS["PENDIENTE"])
-        display_text = "APTA" if st == "APTA" else ("REVISAR" if "REVISIÓN" in st else ("ELIMINAR" if "ELIMINACIÓN" in st else st))
+        if "EXCLUID" in st:
+            display_text = "EXCLUIDA"
+        elif st in ("APTA", "OK"):
+            display_text = "APTA"
+        elif "REVIS" in st or "ALERT" in st or "WARN" in st:
+            display_text = "ALERTA"
+        elif "ELIMIN" in st or "ERR" in st:
+            display_text = "ERROR"
+        elif "APLIC" in st:
+            display_text = "APLICADO"
+        else:
+            display_text = st
         self.label.setText(f"{cfg['icon']} {display_text}")
         self.setStyleSheet(f"""
             QWidget {{

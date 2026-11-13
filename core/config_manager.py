@@ -173,12 +173,49 @@ class ConfigManager:
             self.save()
 
     def set_pattern(self, pattern: str, preset_name: Optional[str] = None):
-        """Actualiza el patrón activo y el nombre de preset."""
+        """Actualiza el patrón activo y opcionalmente el nombre de preset."""
+        if "naming" not in self.config_data:
+            self.config_data["naming"] = {}
         self.config_data["naming"]["current_pattern"] = pattern
         if preset_name:
             self.config_data["naming"]["active_preset"] = preset_name
+            if "presets" not in self.config_data["naming"]:
+                self.config_data["naming"]["presets"] = {}
             self.config_data["naming"]["presets"][preset_name] = pattern
         self.save()
+
+    def get_presets(self) -> Dict[str, str]:
+        """Obtiene el diccionario de todos los presets disponibles."""
+        return dict(self.config_data.get("naming", {}).get("presets", DEFAULT_CONFIG["naming"]["presets"]))
+
+    def add_preset(self, name: str, pattern: str) -> bool:
+        """Crea o guarda un nuevo preset personalizado y lo marca como activo."""
+        if not name or not pattern:
+            return False
+        if "naming" not in self.config_data:
+            self.config_data["naming"] = {}
+        if "presets" not in self.config_data["naming"]:
+            self.config_data["naming"]["presets"] = {}
+        self.config_data["naming"]["presets"][name] = pattern
+        self.config_data["naming"]["active_preset"] = name
+        self.config_data["naming"]["current_pattern"] = pattern
+        self.save()
+        return True
+
+    def delete_preset(self, name: str) -> bool:
+        """Elimina un preset existente asegurando que quede al menos uno activo."""
+        presets = self.config_data.get("naming", {}).get("presets", {})
+        if name in presets:
+            if len(presets) <= 1:
+                return False  # No eliminar el único preset existente
+            del presets[name]
+            if self.config_data.get("naming", {}).get("active_preset") == name:
+                new_active = next(iter(presets.keys()))
+                self.config_data["naming"]["active_preset"] = new_active
+                self.config_data["naming"]["current_pattern"] = presets[new_active]
+            self.save()
+            return True
+        return False
 
     def get_pattern(self) -> str:
         return self.config_data.get("naming", {}).get("current_pattern", "{artist}{feat} - {title}{remix}")

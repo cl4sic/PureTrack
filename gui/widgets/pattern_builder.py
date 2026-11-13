@@ -18,7 +18,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QComboBox,
     QFrame,
-    QScrollArea
+    QScrollArea,
+    QInputDialog,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, Signal
 from core.config_manager import ConfigManager, SAMPLE_TRACK
@@ -50,18 +52,34 @@ class PatternBuilder(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        # 1. Selector de Presets
+        # 1. Selector de Presets + Controles de Creación/Edición
         preset_layout = QHBoxLayout()
+        preset_layout.setSpacing(6)
         preset_layout.addWidget(QLabel("Preset:"))
+
         self.preset_combo = QComboBox()
-        presets = self.config_manager.get("naming", "presets", {})
-        active_preset = self.config_manager.get("naming", "active_preset", "Estándar EDM / Pop")
-        for p_name in presets.keys():
-            self.preset_combo.addItem(p_name)
-        if active_preset in presets:
-            self.preset_combo.setCurrentText(active_preset)
+        self._reload_presets_combo()
         self.preset_combo.currentTextChanged.connect(self._on_preset_selected)
         preset_layout.addWidget(self.preset_combo, stretch=1)
+
+        self.btn_save_preset = QPushButton("Guardar")
+        self.btn_save_preset.setToolTip("Guardar cambios del patrón en este preset")
+        self.btn_save_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
+        self.btn_save_preset.clicked.connect(self._save_current_preset)
+        preset_layout.addWidget(self.btn_save_preset)
+
+        self.btn_new_preset = QPushButton("+ Nuevo")
+        self.btn_new_preset.setToolTip("Crear un nuevo preset personalizado")
+        self.btn_new_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
+        self.btn_new_preset.clicked.connect(self._create_new_preset)
+        preset_layout.addWidget(self.btn_new_preset)
+
+        self.btn_delete_preset = QPushButton("Borrar")
+        self.btn_delete_preset.setToolTip("Eliminar el preset seleccionado")
+        self.btn_delete_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
+        self.btn_delete_preset.clicked.connect(self._delete_current_preset)
+        preset_layout.addWidget(self.btn_delete_preset)
+
         layout.addLayout(preset_layout)
 
         # 2. Campo de entrada de patrón
@@ -148,12 +166,92 @@ class PatternBuilder(QWidget):
         self.pattern_input.setCursorPosition(cursor_pos + len(token))
         self.pattern_input.setFocus()
 
+    def _reload_presets_combo(self, select_preset: str = None):
+        """Recarga el combobox con los presets guardados en la configuración."""
+        self.preset_combo.blockSignals(True)
+        self.preset_combo.clear()
+        presets = self.config_manager.get_presets()
+        active = select_preset or self.config_manager.get("naming", "active_preset", "Estándar EDM / Pop")
+        for p_name in presets.keys():
+            self.preset_combo.addItem(p_name)
+        if active in presets:
+            self.preset_combo.setCurrentText(active)
+        elif self.preset_combo.count() > 0:
+            self.preset_combo.setCurrentIndex(0)
+        self.preset_combo.blockSignals(False)
+
+    def _save_current_preset(self):
+        """Guarda o actualiza el patrón actual en el preset seleccionado."""
+        current_preset = self.preset_combo.currentText().strip()
+        pattern = self.pattern_input.text().strip()
+        if not current_preset or not pattern:
+            return
+        self.config_manager.set_pattern(pattern, current_preset)
+        self.pattern_changed.emit(pattern)
+        QMessageBox.information(
+            self,
+            "Preset Guardado",
+            f"El preset '{current_preset}' ha sido actualizado con el patrón:\n\n{pattern}"
+        )
+
+    def _create_new_preset(self):
+        """Pide un nombre al usuario y guarda un nuevo preset con el patrón actual."""
+        pattern = self.pattern_input.text().strip()
+        if not pattern:
+            QMessageBox.warning(self, "Aviso", "El patrón no puede estar vacío.")
+            return
+
+        name, ok = QInputDialog.getText(
+            self,
+            "Nuevo Preset Personalizado",
+            "Introduce el nombre para el nuevo preset:",
+            text="Mi Preset Personalizado"
+        )
+        if ok and name.strip():
+            preset_name = name.strip()
+            self.config_manager.add_preset(preset_name, pattern)
+            self._reload_presets_combo(select_preset=preset_name)
+            self.pattern_changed.emit(pattern)
+            QMessageBox.information(
+                self,
+                "Preset Creado",
+                f"El preset '{preset_name}' se ha creado y guardado correctamente."
+            )
+
+    def _delete_current_preset(self):
+        """Elimina el preset actualmente seleccionado."""
+        current_preset = self.preset_combo.currentText().strip()
+        if not current_preset:
+            return
+
+        presets = self.config_manager.get_presets()
+        if len(presets) <= 1:
+            QMessageBox.warning(self, "Aviso", "No se puede eliminar el único preset existente.")
+            return
+
+        confirm = QMessageBox.question(
+            self,
+            "Eliminar Preset",
+            f"¿Estás seguro de que deseas eliminar el preset '{current_preset}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if confirm == QMessageBox.StandardButton.Yes:
+            self.config_manager.delete_preset(current_preset)
+            self._reload_presets_combo()
+            new_preset = self.preset_combo.currentText()
+            new_pattern = self.config_manager.get_pattern()
+            self.pattern_input.setText(new_pattern)
+            self.pattern_changed.emit(new_pattern)
+
     def _on_preset_selected(self, preset_name: str):
-        presets = self.config_manager.get("naming", "presets", {})
+        """Manejador cuando el usuario cambia el preset en el combobox."""
+        presets = self.config_manager.get_presets()
         if preset_name in presets:
             pattern = presets[preset_name]
             self.pattern_input.setText(pattern)
             self.config_manager.set_pattern(pattern, preset_name)
+            self.pattern_changed.emit(pattern)
 
     def _on_pattern_text_changed(self, text: str):
         self._update_preview(text)

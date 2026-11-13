@@ -35,9 +35,10 @@ from PySide6.QtWidgets import (
     QApplication
 )
 from PySide6.QtCore import Qt, Signal, QUrl
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QAction, QIcon
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QAction, QIcon, QColor
 
 from core.config_manager import ConfigManager
+from core.common_utils import sanitize_windows_filename
 from core.auditor import AudioAuditResult
 from core.resolver import ResolvedMetadata
 from gui.widgets.audio_badge import AudioBadge
@@ -217,13 +218,22 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels([
             "Estado", "Archivo Original", "Nombre Proyectado", "Bitrate", "Duración", "Clipping %", "Acción"
         ])
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_STATUS, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_ORIGINAL, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_PROJECTED, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_BITRATE, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_DURATION, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_CLIPPING, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(self.COL_ACTION, QHeaderView.ResizeMode.ResizeToContents)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(False)
+        header.setSectionsMovable(True)
+        header.sectionDoubleClicked.connect(self.table.resizeColumnToContents)
+
+        # Anchos iniciales generosos y ajustables interactivamente por el usuario
+        self.table.setColumnWidth(self.COL_STATUS, 120)
+        self.table.setColumnWidth(self.COL_ORIGINAL, 340)
+        self.table.setColumnWidth(self.COL_PROJECTED, 340)
+        self.table.setColumnWidth(self.COL_BITRATE, 85)
+        self.table.setColumnWidth(self.COL_DURATION, 85)
+        self.table.setColumnWidth(self.COL_CLIPPING, 95)
+        self.table.setColumnWidth(self.COL_ACTION, 120)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -347,11 +357,13 @@ class MainWindow(QMainWindow):
 
             # Archivo Original
             item_orig = QTableWidgetItem(f.name)
-            item_orig.setToolTip(f_str)
+            item_orig.setData(Qt.ItemDataRole.UserRole, f_str)
+            item_orig.setToolTip(f"{f.name}\nRuta: {f_str}")
             self.table.setItem(idx, self.COL_ORIGINAL, item_orig)
 
             # Nombre Proyectado
             item_proj = QTableWidgetItem("—")
+            item_proj.setToolTip("Doble clic para editar o asignar un nombre personalizado")
             self.table.setItem(idx, self.COL_PROJECTED, item_proj)
 
             # Bitrate
@@ -383,7 +395,8 @@ class MainWindow(QMainWindow):
         self.progress_panel.reset_progress()
 
         audit_settings = self.inspector.get_audit_settings()
-        self.current_worker = AuditWorker(files, audit_settings=audit_settings)
+        pattern = self.inspector.get_pattern()
+        self.current_worker = AuditWorker(files, audit_settings=audit_settings, naming_pattern=pattern)
         self.current_worker.sig_track_audited.connect(self._on_track_audited)
         self.current_worker.sig_progress.connect(self.progress_panel.update_global_progress)
         self.current_worker.sig_item_progress.connect(self.progress_panel.update_item_progress)
@@ -426,6 +439,10 @@ class MainWindow(QMainWindow):
                 r = MetadataResolver(search_dir=self.selected_directory)
                 meta = r.resolve_track_metadata(src_path, custom_pattern=self.inspector.get_pattern())
                 d["resolved_metadata"] = meta
+
+            # Garantizar que cualquier nombre personalizado elegido por el usuario se respete 100%
+            if d.get("has_custom_name") and d.get("custom_filename"):
+                meta.new_filename = d["custom_filename"]
 
             dest_path = src_path.parent / meta.new_filename
             operations.append((meta, src_path, dest_path))
@@ -494,13 +511,51 @@ class MainWindow(QMainWindow):
     # -----------------------------------------------------------------
     # ACTUALIZACIÓN REACTIVA DE LA TABLA
     # -----------------------------------------------------------------
+    def _get_row_filepath(self, row: int) -> Optional[str]:
+        orig_item = self.table.item(row, self.COL_ORIGINAL)
+        if orig_item:
+            stored = orig_item.data(Qt.ItemDataRole.UserRole)
+            if stored:
+                return str(stored)
+            return orig_item.text()
+        return None
+
+    def _get_row_track_data(self, row: int) -> Dict[str, Any]:
+        fpath = self._get_row_filepath(row)
+        if fpath:
+            if fpath in self.tracks_data:
+                return self.tracks_data[fpath]
+            try:
+                resolved = str(Path(fpath).resolve())
+                if resolved in self.tracks_data:
+                    return self.tracks_data[resolved]
+            except Exception:
+                pass
+            fname = Path(fpath).name
+            for k, v in self.tracks_data.items():
+                if v.get("filename") == fname:
+                    return v
+        return {}
+
     def _find_row_by_filepath(self, filepath: str) -> Optional[int]:
-        target = Path(filepath).resolve()
+        try:
+            target = Path(filepath).resolve()
+        except Exception:
+            target = None
+
         for row in range(self.table.rowCount()):
             item = self.table.item(row, self.COL_ORIGINAL)
             if item:
-                fp = item.toolTip()
-                if Path(fp).resolve() == target:
+                stored = item.data(Qt.ItemDataRole.UserRole)
+                if stored and target:
+                    try:
+                        if Path(stored).resolve() == target:
+                            return row
+                    except Exception:
+                        pass
+                if target and item.text() == target.name:
+                    return row
+                if not target and item.text() == str(filepath):
                     return row
         return None
 
@@ -510,13 +565,35 @@ class MainWindow(QMainWindow):
             return
 
         fp_key = str(Path(res.filepath).resolve())
-        if fp_key in self.tracks_data:
-            self.tracks_data[fp_key]["audit_result"] = res
-            self.tracks_data[fp_key]["status"] = res.verdict
+        data = self.tracks_data.get(fp_key)
+        if data is None:
+            data = self._get_row_track_data(row)
 
-        # Actualizar Badge
+        data["audit_result"] = res
+        data["status"] = res.verdict
+
+        # Actualizar Badge Estado en tiempo real
         badge = AudioBadge(res.verdict)
         self.table.setCellWidget(row, self.COL_STATUS, badge)
+
+        # Actualizar Nombre Proyectado si se resolvió y no hay override manual fijado por el usuario
+        resolved_meta = getattr(res, "resolved_metadata", None)
+        if resolved_meta:
+            if not data.get("has_custom_name"):
+                data["resolved_metadata"] = resolved_meta
+                item_proj = QTableWidgetItem(resolved_meta.new_filename)
+                item_proj.setToolTip(f"Proyectado: {resolved_meta.new_filename}\nFuente: {resolved_meta.source}")
+                self.table.setItem(row, self.COL_PROJECTED, item_proj)
+            else:
+                custom_name = data.get("custom_filename", resolved_meta.new_filename)
+                item_proj = self.table.item(row, self.COL_PROJECTED)
+                if not item_proj or item_proj.text() == "—":
+                    item_proj = QTableWidgetItem(custom_name)
+                    item_proj.setForeground(QColor("#ff9800"))
+                    font = item_proj.font()
+                    font.setBold(True)
+                    item_proj.setFont(font)
+                    self.table.setItem(row, self.COL_PROJECTED, item_proj)
 
         # Bitrate
         self.table.setItem(row, self.COL_BITRATE, QTableWidgetItem(f"{res.mutagen_bitrate_kbps} kbps ({res.bitrate_mode})"))
@@ -532,7 +609,12 @@ class MainWindow(QMainWindow):
         self.table.setItem(row, self.COL_CLIPPING, item_clip)
 
         # Acción / Veredicto
-        self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(res.verdict_reason[:35] + ("..." if len(res.verdict_reason) > 35 else "")))
+        if not data.get("has_custom_name"):
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(res.verdict_reason[:35] + ("..." if len(res.verdict_reason) > 35 else "")))
+        else:
+            item_act = QTableWidgetItem("Personalizado")
+            item_act.setForeground(QColor("#00b4d8"))
+            self.table.setItem(row, self.COL_ACTION, item_act)
 
     def _on_track_resolved(self, meta: ResolvedMetadata):
         row = self._find_row_by_filepath(meta.original_path)
@@ -540,21 +622,48 @@ class MainWindow(QMainWindow):
             return
 
         fp_key = str(Path(meta.original_path).resolve())
-        if fp_key in self.tracks_data:
-            self.tracks_data[fp_key]["resolved_metadata"] = meta
+        data = self.tracks_data.get(fp_key)
+        if data is None:
+            data = self._get_row_track_data(row)
+
+        if data.get("has_custom_name") and data.get("custom_filename"):
+            meta.new_filename = data["custom_filename"]
+            data["resolved_metadata"] = meta
+            return
+
+        data["resolved_metadata"] = meta
 
         item_proj = QTableWidgetItem(meta.new_filename)
         item_proj.setToolTip(f"Proyectado: {meta.new_filename}\nFuente: {meta.source}")
         self.table.setItem(row, self.COL_PROJECTED, item_proj)
+        if not data.get("has_custom_name"):
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Proyectado"))
 
     def _on_track_applied(self, orig_name: str, new_name: str, success: bool, message: str):
         # Localizar fila por nombre original
         for row in range(self.table.rowCount()):
             item = self.table.item(row, self.COL_ORIGINAL)
             if item and item.text() == orig_name:
-                badge = AudioBadge("APLICADO" if success else "CANDIDATA A ELIMINACIÓN")
+                badge = AudioBadge("APLICADO" if success else "ERROR")
                 self.table.setCellWidget(row, self.COL_STATUS, badge)
-                self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Actualizado en disco" if success else message))
+
+                # Actualizar columna Nombre Proyectado con el nombre definitivo aplicado
+                item_proj = QTableWidgetItem(new_name)
+                item_proj.setToolTip(f"Renombrado en disco: {new_name}")
+                item_proj.setForeground(QColor("#90e0ef"))
+                font = item_proj.font()
+                font.setBold(True)
+                item_proj.setFont(font)
+                self.table.setItem(row, self.COL_PROJECTED, item_proj)
+
+                # Acción
+                act_item = QTableWidgetItem("Actualizado en disco" if success else message)
+                act_item.setForeground(QColor("#4caf50" if success else "#f44336"))
+                self.table.setItem(row, self.COL_ACTION, act_item)
+
+                data = self._get_row_track_data(row)
+                if data:
+                    data["status"] = "APLICADO" if success else "ERROR"
                 break
 
     def _on_worker_finished(self, success: bool, summary: str):
@@ -569,8 +678,9 @@ class MainWindow(QMainWindow):
     def _on_apply_finished(self, success: bool, summary: str):
         self.progress_panel.set_operation_active(False)
         self.current_worker = None
+        self.progress_panel.append_log("SUCCESS" if success else "ERROR", summary)
         QMessageBox.information(self, "Proceso Finalizado", summary)
-        self._reload_current_directory()
+        # No recargar la tabla para conservar las filas visualmente en estado APLICADO y sus nombres finales
 
     def _on_rollback_finished(self, success: bool, summary: str):
         self.progress_panel.set_operation_active(False)
@@ -594,19 +704,31 @@ class MainWindow(QMainWindow):
         if not orig_item:
             return
 
-        fpath = orig_item.toolTip()
-        data = self.tracks_data.get(fpath, {})
+        data = self._get_row_track_data(row)
+        is_excluded = data.get("excluded", False)
 
         menu = QMenu(self)
-        action_inspect = QAction("Inspeccionar detalles técnicos", self)
+        action_inspect = QAction("🔍 Inspeccionar detalles técnicos", self)
         action_inspect.triggered.connect(lambda: self._inspect_track(data))
         menu.addAction(action_inspect)
 
-        action_edit = QAction("Editar manualmente nombre proyectado", self)
+        action_edit = QAction("✏️ Asignar nombre personalizado...", self)
         action_edit.triggered.connect(lambda: self._edit_track_manually(row, data))
         menu.addAction(action_edit)
 
-        action_exclude = QAction("Excluir del lote" if not data.get("excluded", False) else "Re-incluir en el lote", self)
+        if data.get("has_custom_name"):
+            action_revert = QAction("🔄 Restablecer a patrón automático", self)
+            action_revert.triggered.connect(lambda: self._revert_to_pattern(row, data))
+            menu.addAction(action_revert)
+
+        menu.addSeparator()
+
+        # Interruptor dinámico bidireccional Excluir / Incluir
+        if is_excluded:
+            action_exclude = QAction("➕ Incluir en el lote", self)
+        else:
+            action_exclude = QAction("⊘ Excluir del lote", self)
+
         action_exclude.triggered.connect(lambda: self._toggle_exclude_track(row, data))
         menu.addAction(action_exclude)
 
@@ -614,9 +736,13 @@ class MainWindow(QMainWindow):
 
     def _on_table_row_double_click(self, index):
         row = index.row()
-        orig_item = self.table.item(row, self.COL_ORIGINAL)
-        if orig_item:
-            data = self.tracks_data.get(orig_item.toolTip(), {})
+        col = index.column()
+        data = self._get_row_track_data(row)
+
+        # Si el usuario hace doble clic sobre la columna de Nombre Proyectado, abre directamente el editor
+        if col == self.COL_PROJECTED:
+            self._edit_track_manually(row, data)
+        else:
             self._inspect_track(data)
 
     def _inspect_track(self, data: Dict[str, Any]):
@@ -624,56 +750,171 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def _edit_track_manually(self, row: int, data: Dict[str, Any]):
-        current = self.table.item(row, self.COL_PROJECTED).text()
-        if current == "—":
-            current = data.get("filename", "")
+        if not data:
+            data = self._get_row_track_data(row)
 
-        new_name, ok = QInputDialog.getText(self, "Editar Nombre Proyectado", "Nombre de archivo destino:", text=current)
+        proj_item = self.table.item(row, self.COL_PROJECTED)
+        orig_item = self.table.item(row, self.COL_ORIGINAL)
+
+        # Determinar el nombre actual para pre-rellenar el diálogo:
+        # Pre-rellenar con Nombre Proyectado (si != "—") o Archivo Original, siempre sin .mp3
+        current = ""
+        if proj_item and proj_item.text().strip() and proj_item.text().strip() != "—":
+            current = proj_item.text().strip()
+        elif orig_item and orig_item.text().strip():
+            current = orig_item.text().strip()
+        elif data.get("filename"):
+            current = data.get("filename")
+
+        if current.lower().endswith(".mp3"):
+            current = current[:-4]
+
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Editar Nombre Personalizado",
+            "Introduce el nuevo nombre para esta pista (sin extensión):\n"
+            "(Este nombre quedará fijado y se aplicará tal cual en disco)",
+            text=current
+        )
         if ok and new_name.strip():
-            from core.common_utils import sanitize_windows_filename
             clean = sanitize_windows_filename(new_name.strip())
-            self.table.setItem(row, self.COL_PROJECTED, QTableWidgetItem(clean))
+            if not clean.lower().endswith(".mp3"):
+                clean += ".mp3"
+
+            # Marcar la pista con nombre personalizado protegido en el modelo
+            data["custom_filename"] = clean
+            data["has_custom_name"] = True
+
             meta = data.get("resolved_metadata")
             if meta:
                 meta.new_filename = clean
+            else:
+                src_path = Path(data.get("filepath", data.get("path", "")))
+                if not src_path.name and orig_item:
+                    src_path = Path(self.selected_directory or ".") / orig_item.text()
+                from core.resolver import MetadataResolver
+                r = MetadataResolver(search_dir=self.selected_directory)
+                meta = r.resolve_track_metadata(src_path, custom_pattern=self.inspector.get_pattern())
+                meta.new_filename = clean
+                data["resolved_metadata"] = meta
+
+            # Actualizar celda en la tabla con estilo visual ámbar distintivo
+            item_proj = QTableWidgetItem(clean)
+            item_proj.setToolTip(f"Nombre fijado manualmente por el usuario:\n{clean}")
+            item_proj.setForeground(QColor("#ff9800"))
+            font = item_proj.font()
+            font.setBold(True)
+            item_proj.setFont(font)
+            self.table.setItem(row, self.COL_PROJECTED, item_proj)
+
+            item_act = QTableWidgetItem("Personalizado")
+            item_act.setForeground(QColor("#00b4d8"))
+            self.table.setItem(row, self.COL_ACTION, item_act)
+
+            disp_name = data.get("filename", orig_item.text() if orig_item else "Pista")
+            self.progress_panel.append_log("INFO", f"Nombre personalizado fijado para '{disp_name}': {clean}")
+
+    def _revert_to_pattern(self, row: int, data: Dict[str, Any]):
+        """Restablece el nombre de una pista al patrón dinámico generado automáticamente."""
+        if not data:
+            data = self._get_row_track_data(row)
+        data["has_custom_name"] = False
+        data.pop("custom_filename", None)
+        meta = data.get("resolved_metadata")
+        if meta:
+            pattern = self.inspector.get_pattern()
+            track_dict = {
+                "main_artists": meta.main_artists,
+                "guest_artists": meta.guest_artists,
+                "feat_artists": meta.feat_artists,
+                "remix_artists": meta.remix_artists,
+                "title": meta.title,
+                "remix_name": meta.remix_name,
+                "album": meta.album,
+                "album_artists": meta.album_artists,
+                "genre": meta.genre,
+                "year": meta.year,
+            }
+            recomputed = ConfigManager.render_pattern(pattern, track_dict)
+            meta.new_filename = recomputed
+            item_proj = QTableWidgetItem(recomputed)
+            item_proj.setToolTip(f"Proyectado: {recomputed}\nFuente: {meta.source}")
+            self.table.setItem(row, self.COL_PROJECTED, item_proj)
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Activo"))
+            self.progress_panel.append_log("INFO", f"Pista '{data.get('filename')}' restablecida a patrón automático.")
 
     def _toggle_exclude_track(self, row: int, data: Dict[str, Any]):
-        is_exc = not data.get("excluded", False)
+        if not data:
+            data = self._get_row_track_data(row)
+        was_excluded = data.get("excluded", False)
+        is_exc = not was_excluded
         data["excluded"] = is_exc
 
-        for col in range(self.table.columnCount()):
-            it = self.table.item(row, col)
-            if it:
-                it.setForeground(Qt.GlobalColor.darkGray if is_exc else Qt.GlobalColor.white)
+        if is_exc:
+            data["pre_exclude_status"] = data.get("status", "PENDIENTE")
+            for col in range(self.table.columnCount()):
+                it = self.table.item(row, col)
+                if it:
+                    it.setForeground(QColor("#666666"))
 
-        badge = AudioBadge("CANDIDATA A ELIMINACIÓN" if is_exc else data.get("status", "PENDIENTE"))
-        self.table.setCellWidget(row, self.COL_STATUS, badge)
-        self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Excluido" if is_exc else "Activo"))
+            badge = AudioBadge("EXCLUIDA")
+            self.table.setCellWidget(row, self.COL_STATUS, badge)
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Excluido"))
+            self.progress_panel.append_log("WARNING", f"Pista excluida del lote: '{data.get('filename')}'")
+        else:
+            restored_status = data.get("pre_exclude_status", data.get("status", "PENDIENTE"))
+            data["status"] = restored_status
+
+            for col in range(self.table.columnCount()):
+                it = self.table.item(row, col)
+                if it:
+                    it.setForeground(Qt.GlobalColor.white)
+
+            if data.get("has_custom_name"):
+                proj_it = self.table.item(row, self.COL_PROJECTED)
+                if proj_it:
+                    proj_it.setForeground(QColor("#ff9800"))
+                    f = proj_it.font()
+                    f.setBold(True)
+                    proj_it.setFont(f)
+                act_it = self.table.item(row, self.COL_ACTION)
+                if act_it:
+                    act_it.setForeground(QColor("#00b4d8"))
+                    act_it.setText("Personalizado")
+            else:
+                act_text = "En espera" if restored_status == "PENDIENTE" else "Activo"
+                self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(act_text))
+
+            badge = AudioBadge(restored_status)
+            self.table.setCellWidget(row, self.COL_STATUS, badge)
+            self.progress_panel.append_log("INFO", f"Pista reincorporada al lote: '{data.get('filename')}'")
 
     def _on_settings_changed(self):
         """Al cambiar el patrón o ajustes en el inspector, actualiza las proyecciones si ya fueron resueltas."""
         pattern = self.inspector.get_pattern()
         for row in range(self.table.rowCount()):
-            orig_item = self.table.item(row, self.COL_ORIGINAL)
-            if orig_item:
-                data = self.tracks_data.get(orig_item.toolTip(), {})
-                meta = data.get("resolved_metadata")
-                if meta:
-                    track_dict = {
-                        "main_artists": meta.main_artists,
-                        "guest_artists": meta.guest_artists,
-                        "feat_artists": meta.feat_artists,
-                        "remix_artists": meta.remix_artists,
-                        "title": meta.title,
-                        "remix_name": meta.remix_name,
-                        "album": meta.album,
-                        "album_artists": meta.album_artists,
-                        "genre": meta.genre,
-                        "year": meta.year,
-                    }
-                    updated_name = ConfigManager.render_pattern(pattern, track_dict)
-                    meta.new_filename = updated_name
-                    self.table.setItem(row, self.COL_PROJECTED, QTableWidgetItem(updated_name))
+            data = self._get_row_track_data(row)
+            # Si el usuario fijó un nombre personalizado, protegerlo contra sobreescritura
+            if data.get("has_custom_name"):
+                continue
+
+            meta = data.get("resolved_metadata")
+            if meta:
+                track_dict = {
+                    "main_artists": meta.main_artists,
+                    "guest_artists": meta.guest_artists,
+                    "feat_artists": meta.feat_artists,
+                    "remix_artists": meta.remix_artists,
+                    "title": meta.title,
+                    "remix_name": meta.remix_name,
+                    "album": meta.album,
+                    "album_artists": meta.album_artists,
+                    "genre": meta.genre,
+                    "year": meta.year,
+                }
+                updated_name = ConfigManager.render_pattern(pattern, track_dict)
+                meta.new_filename = updated_name
+                self.table.setItem(row, self.COL_PROJECTED, QTableWidgetItem(updated_name))
 
     def _toggle_inspector_panel(self):
         visible = self.inspector.isVisible()

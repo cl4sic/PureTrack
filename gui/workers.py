@@ -97,11 +97,15 @@ class AuditWorker(BaseAudioWorker):
         self,
         file_paths: List[Path],
         audit_settings: Optional[Dict[str, Any]] = None,
+        naming_pattern: Optional[str] = None,
         parent=None
     ):
         super().__init__(parent)
         self.file_paths = [Path(p) for p in file_paths]
+        self.naming_pattern = naming_pattern
         settings = audit_settings or {}
+        search_dir = self.file_paths[0].parent if self.file_paths else None
+        self.resolver = MetadataResolver(search_dir=search_dir)
         self.auditor = AudioAuditor(
             min_bitrate_kbps=settings.get("min_bitrate_kbps", 190),
             min_duration_sec=settings.get("min_duration_sec", 60.0),
@@ -111,7 +115,7 @@ class AuditWorker(BaseAudioWorker):
             check_clipping=settings.get("check_clipping", True),
             check_silence=settings.get("check_silence", True),
             check_abrupt_ending=settings.get("check_abrupt_ending", True),
-            search_dir=self.file_paths[0].parent if self.file_paths else None
+            search_dir=search_dir
         )
 
     def run(self):
@@ -144,6 +148,14 @@ class AuditWorker(BaseAudioWorker):
             self.sig_item_progress.emit(3, 4, "Análisis de Espectro, Clipping y Silencios")
             try:
                 res: AudioAuditResult = self.auditor.audit_file(fpath)
+                try:
+                    res.resolved_metadata = self.resolver.resolve_track_metadata(
+                        fpath,
+                        custom_pattern=self.naming_pattern
+                    )
+                except Exception:
+                    res.resolved_metadata = None
+
                 self.sig_item_progress.emit(4, 4, "Diagnóstico finalizado")
 
                 self.sig_track_audited.emit(res)

@@ -77,12 +77,13 @@ def prepare_and_zip():
     win_scripts_dir = ROOT_DIR / "package" / "windows_scripts"
     files_to_copy = [
         (ROOT_DIR / "app.py", DIST_WIN_DIR / "app.py"),
+        (ROOT_DIR / "config.json", DIST_WIN_DIR / "config.json"),
         (ROOT_DIR / "requirements.txt", DIST_WIN_DIR / "requirements.txt"),
         (ROOT_DIR / "USER_MANUAL.md", DIST_WIN_DIR / "USER_MANUAL.md"),
         (ROOT_DIR / "MANUAL_USUARIO.md", DIST_WIN_DIR / "MANUAL_USUARIO.md"),
         (ROOT_DIR / "README.md", DIST_WIN_DIR / "README.md"),
         (ROOT_DIR / "README_ES.md", DIST_WIN_DIR / "README_ES.md"),
-        (win_scripts_dir / "iniciar_AudioMaster.bat", DIST_WIN_DIR / "iniciar_AudioMaster.bat"),
+        (win_scripts_dir / "ejecutar_AudioMaster.bat", DIST_WIN_DIR / "ejecutar_AudioMaster.bat"),
         (win_scripts_dir / "compilar_exe_en_windows.bat", DIST_WIN_DIR / "compilar_exe_en_windows.bat"),
         (win_scripts_dir / "INSTRUCCIONES_WINDOWS.txt", DIST_WIN_DIR / "INSTRUCCIONES_WINDOWS.txt"),
     ]
@@ -129,6 +130,12 @@ def prepare_and_zip():
 
     size_mb = ZIP_OUTPUT.stat().st_size / (1024 * 1024)
     print(f"[+] Paquete ZIP generado con éxito: {ZIP_OUTPUT} ({size_mb:.1f} MB)")
+
+    # Limpiar carpeta temporal de compilación
+    if DIST_WIN_DIR.exists():
+        shutil.rmtree(DIST_WIN_DIR)
+        print(f"[+] Directorio temporal {DIST_WIN_DIR.name} limpiado.")
+
     print("=" * 75)
     return True
 

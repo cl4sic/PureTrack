@@ -23,7 +23,7 @@ import soundfile as sf
 import mutagen
 from mutagen.mp3 import MP3, BitrateMode
 
-from core.common_utils import resolve_binary, to_extended_length_path
+from core.common_utils import resolve_binary, to_extended_length_path, run_hidden_subprocess
 
 
 @dataclass
@@ -53,6 +53,7 @@ class AudioAuditResult:
     anomalies: List[str] = field(default_factory=list)
     verdict: str = "APTA"  # "APTA", "REVISIÓN MANUAL", "CANDIDATA A ELIMINACIÓN"
     verdict_reason: str = "Pista íntegra y de calidad óptima"
+    resolved_metadata: Optional[Any] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -91,7 +92,7 @@ class AudioAuditor:
         """Comprueba errores de decodificación o corrupción usando FFmpeg."""
         cmd = [self.ffmpeg_bin, "-v", "error", "-i", str(file_path), "-f", "null", "-"]
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            res = run_hidden_subprocess(cmd, capture_output=True, text=True, check=False)
             err_msg = res.stderr.strip()
             return (len(err_msg) == 0 and res.returncode == 0, err_msg)
         except Exception as e:
@@ -117,7 +118,7 @@ class AudioAuditor:
         ffprobe_fmt_kbps = None
 
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            res = run_hidden_subprocess(cmd, capture_output=True, text=True, check=False)
             if res.returncode == 0:
                 data = json.loads(res.stdout)
                 streams = [s for s in data.get("streams", []) if s.get("codec_type") == "audio"]
@@ -164,7 +165,7 @@ class AudioAuditor:
             "-"
         ]
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            res = run_hidden_subprocess(cmd, capture_output=True, text=True, check=False)
             lines = res.stderr.splitlines()
             body_silences = []
             tail_silences = []

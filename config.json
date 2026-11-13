@@ -25,7 +25,7 @@
     "silence_threshold_sec": 3.0,
     "check_abrupt_ending": true,
     "abrupt_rms_threshold_dbfs": -14.0,
-    "min_bitrate_kbps": 190,
+    "min_bitrate_kbps": 180,
     "min_duration_sec": 60.0
   },
   "ui_preferences": {

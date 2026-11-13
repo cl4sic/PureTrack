@@ -70,11 +70,10 @@ def build_release(mode: str = "onedir", windowed: bool = True):
         "--collect-all", "numpy",
     ]
 
-    if windowed and not is_windows:
-        # En Linux/Unix no usar console window flag restrictivo
+    if windowed:
         cmd.append("--windowed")
-    elif windowed and is_windows:
-        cmd.append("--noconsole")
+        if is_windows:
+            cmd.append("--noconsole")
 
     # Añadir módulos de core y gui
     cmd.extend([

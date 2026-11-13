@@ -154,13 +154,37 @@ python package/build_release.py --mode onedir
 ```
 
 ### En Windows
-Descarga y descomprime `AudioMaster_Windows.zip` y haz doble clic en:
-- **`iniciar_AudioMaster.bat`**: Lanza la aplicación directamente en 1 clic.
-- O compila un ejecutable nativo `.exe` haciendo doble clic en **`compilar_exe_en_windows.bat`**.
+1. Descarga y descomprime `AudioMaster_Windows.zip`.
+2. Haz doble clic en **`compilar_exe_en_windows.bat`**:
+   - Comprueba e instala automáticamente dependencias en 1 clic.
+   - Genera el ejecutable autónomo en `dist\AudioMaster\AudioMaster.exe`.
+   - Al finalizar, te pregunta si deseas abrirlo de inmediato (escribe `S`).
+3. Para iniciar la aplicación en el futuro, simplemente haz doble clic en:
+   - **`ejecutar_AudioMaster.bat`** (o abre directamente `dist\AudioMaster\AudioMaster.exe`).
 
 ---
 
-## 6. Preguntas Frecuentes (FAQ)
+## 6. Funcionalidades Avanzadas de Interfaz
+
+### Columnas Redimensionables en la Tabla
+- Todas las columnas de la tabla son interactivas: puedes hacer clic y arrastrar cualquier divisor del encabezado para ensanchar o reducir columnas como "Archivo Original" o "Nombre Proyectado" para leer títulos largos.
+- **Auto-ajuste:** Haz doble clic sobre la línea divisoria del encabezado para ajustar automáticamente la columna al ancho exacto del texto más largo.
+- **Scroll horizontal:** Si amplías las columnas más allá de la ventana, la tabla cuenta con barra de desplazamiento horizontal suave.
+
+### Gestión de Presets Personalizados (Crear, Guardar y Editar)
+- **Crear nuevo preset (`+ Nuevo`):** Diseña un patrón con los tokens dinámicos y pulsa `+ Nuevo`. Se te pedirá un nombre y quedará guardado permanentemente en `config.json`.
+- **Guardar cambios (`Guardar`):** Modifica el patrón del preset actual y pulsa `Guardar` para actualizarlo.
+- **Eliminar preset (`Borrar`):** Elimina el preset seleccionado (siempre se conserva al menos uno activo).
+
+### Asignación de Nombres Personalizados (Protección en Disco)
+- **Edición rápida:** Haz doble clic directamente sobre la celda de la columna **"Nombre Proyectado"** de cualquier canción (o haz clic derecho y selecciona *✏️ Asignar nombre personalizado...*).
+- **Protección contra sobreescritura:** Al fijar un nombre personalizado, este se resalta en **color ámbar** y queda protegido; no será reemplazado al cambiar patrones en el inspector ni durante la auditoría.
+- **Aplicación en disco:** Al pulsar **[Aplicar en Disco]**, las pistas con nombre personalizado se renombrarán con el nombre exacto que tú elegiste.
+- **Restablecer:** Si cambias de opinión, haz clic derecho sobre la pista y selecciona *🔄 Restablecer a patrón automático*.
+
+---
+
+## 7. Preguntas Frecuentes (FAQ)
 
 **P: ¿Por qué en algunas distribuciones Linux (como Arch COSMIC) aparecían cuadrados vacíos (`▯`) en los botones?**  
 R: Algunos entornos de escritorio no tienen fuentes de emojis configuradas por defecto en las fuentes del sistema de Qt. En AudioMaster se utilizan iconos vectoriales estándar de Qt y tipografía universal, garantizando que todos los controles se vean nítidos e idénticos en cualquier sistema.

@@ -11,14 +11,14 @@ echo ======================================================================
 echo           COMPILADOR DE AUDIOMASTER PARA WINDOWS
 echo ======================================================================
 echo.
-echo 1. Comprobando instalación de Python...
+echo 1. Comprobando instalacion de Python...
 where python >nul 2>nul
 if %errorlevel% neq 0 (
     where py >nul 2>nul
     if %errorlevel% neq 0 (
         echo [!] ERROR: Python no esta instalado en este equipo.
         echo     Descarga e instala Python desde: https://www.python.org/downloads/
-        echo     (Marca "Add Python to PATH")
+        echo     (Marca la casilla "Add Python to PATH")
         pause
         exit /b 1
     )
@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
 
 echo [+] Python detectado.
 echo.
-echo 2. Instalando PyInstaller y librerias del proyecto...
+echo 2. Instalando PyInstaller y dependencias de AudioMaster...
 %PY_CMD% -m pip install --upgrade pip
 %PY_CMD% -m pip install -r requirements.txt
 %PY_CMD% -m pip install pyinstaller
@@ -40,9 +40,14 @@ echo 3. Compilando AudioMaster.exe...
 
 echo.
 echo ======================================================================
-echo  [+] COMPILACIÓN FINALIZADA CON ÉXITO.
-echo      El ejecutable autónomo se encuentra en:
+echo  [+] COMPILACION FINALIZADA CON EXITO.
+echo      El ejecutable autonomo se encuentra en:
 echo      dist\AudioMaster\AudioMaster.exe
 echo ======================================================================
 echo.
-pause
+set /p ABRIR="Desea iniciar AudioMaster ahora? (S/N): "
+if /i "%ABRIR%"=="S" (
+    echo Iniciando AudioMaster...
+    start "" "dist\AudioMaster\AudioMaster.exe"
+)
+exit /b 0

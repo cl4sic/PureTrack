@@ -77,10 +77,10 @@ source .venv/bin/activate
 python app.py
 ```
 
-### En Windows (Paquete Portable en 1 Clic)
-1. Descarga el archivo **`AudioMaster_Windows.zip`** de este repositorio.
-2. Descomprímelo en cualquier carpeta de tu ordenador.
-3. Haz doble clic en **`iniciar_AudioMaster.bat`**.
+### En Windows (Paquete Portable)
+1. Descarga el archivo **`AudioMaster_Windows.zip`** de este repositorio y descomprímelo.
+2. Haz doble clic en **`compilar_exe_en_windows.bat`** para generar el `.exe` autónomo (y te preguntará si deseas abrirlo de inmediato).
+3. Para abrir la aplicación en el futuro, haz doble clic en **`ejecutar_AudioMaster.bat`** (o entra en `dist\AudioMaster\AudioMaster.exe`).
    *Los binarios externos (`ffmpeg.exe`, `ffprobe.exe`, `fpcalc.exe`) ya están preinstalados dentro de la carpeta `bin/`.*
 
 ---

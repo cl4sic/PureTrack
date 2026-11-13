@@ -20,7 +20,7 @@ import re
 import mutagen
 from mutagen.mp3 import MP3
 
-from core.common_utils import resolve_binary, sanitize_windows_filename
+from core.common_utils import resolve_binary, sanitize_windows_filename, run_hidden_subprocess
 from core.config_manager import ConfigManager
 
 try:
@@ -208,9 +208,9 @@ class MetadataResolver:
             pass
 
     def get_chromaprint_fingerprint(self, file_path: Path) -> Optional[Tuple[str, float]]:
-        """Calcula la huella acústica Chromaprint con fpcalc."""
+        """Calcula la huella acústica Chromaprint con fpcalc de forma silenciosa."""
         try:
-            res = subprocess.run([self.fpcalc_bin, "-json", str(file_path)], capture_output=True, text=True, check=False)
+            res = run_hidden_subprocess([self.fpcalc_bin, "-json", str(file_path)], capture_output=True, text=True, check=False)
             if res.returncode == 0:
                 data = json.loads(res.stdout)
                 return data.get("fingerprint"), float(data.get("duration", 0))
@@ -248,6 +248,66 @@ class MetadataResolver:
             "tcon": tcon,
         }
 
+    def _match_catalog_entry(self, clean_name: str, raw_tpe1: str, raw_tit2: str) -> Optional[Dict[str, Any]]:
+        """
+        Coincidencia estricta contra la base de conocimiento de referencia.
+        Exige coincidencia simultánea de artista Y título para evitar falsos positivos
+        (por ejemplo, evitar que 'Ocean Deep' de Thomas Newson coincida con 'Ocean' de Martin Garrix).
+        """
+        from difflib import SequenceMatcher
+
+        # 1. Extraer artista y título candidatos
+        fn_artist = ""
+        fn_title = clean_name
+        if " - " in clean_name:
+            parts = clean_name.split(" - ", 1)
+            fn_artist = parts[0].strip()
+            fn_title = parts[1].strip()
+
+        cand_artist = (raw_tpe1.strip() or fn_artist).lower()
+        cand_title_raw = (raw_tit2.strip() or fn_title).lower()
+
+        # Aislar el núcleo del título si viene en formato "Título - Remix" o "Título (Remix)"
+        if " - " in cand_title_raw:
+            cand_title_core = cand_title_raw.split(" - ", 1)[0].strip()
+        else:
+            cand_title_core = cand_title_raw
+
+        cand_title_core = re.sub(
+            r"\(.*?\)|\[.*?\]|\b(?:feat\.|ft\.)\s+.*|\b(?:remix|mix|edit|dub|vip)\b.*",
+            "",
+            cand_title_core,
+            flags=re.IGNORECASE
+        ).strip(" -_")
+
+        # 2. Evaluar cada entrada de la base de conocimiento
+        for key, entry in CATALOG_KNOWLEDGE_BASE.items():
+            all_entry_artists = [a.lower() for a in entry["main_artists"] + entry.get("feat_artists", []) + entry.get("remix_artists", [])]
+            entry_title_lower = entry["title"].lower().strip()
+
+            # Condición A: Al menos un artista de la entrada debe coincidir con el artista del archivo
+            artist_match = any(
+                ea in cand_artist or ea in clean_name.lower()
+                for ea in all_entry_artists
+            )
+            if not artist_match:
+                continue
+
+            # Condición B: Coincidencia de título estricta (no basta con contener la palabra)
+            title_exact = (cand_title_core == entry_title_lower)
+            title_sim = SequenceMatcher(None, cand_title_core, entry_title_lower).ratio()
+
+            if title_exact or title_sim >= 0.88:
+                # Si la entrada del catálogo especifica un remix específico, verificar que esté presente
+                entry_remix = entry.get("remix_name")
+                if entry_remix:
+                    remix_keyword = entry_remix.lower().replace("remix", "").strip()
+                    if remix_keyword and remix_keyword not in clean_name.lower() and remix_keyword not in cand_title_raw:
+                        continue
+                return entry
+
+        return None
+
     def resolve_track_metadata(
         self,
         file_path: Union[str, Path],
@@ -258,8 +318,6 @@ class MetadataResolver:
         """
         path = Path(file_path).resolve()
         raw = self.parse_existing_tags_and_filename(path)
-        clean_name_lower = raw["clean_name"].lower()
-        tit2_lower = raw["tit2"].lower()
         cache_key = f"{raw['filename']}_{path.stat().st_size if path.exists() else 0}"
 
         # 1. Verificar caché persistente
@@ -269,24 +327,16 @@ class MetadataResolver:
         confidence = 1.0
 
         if cached:
-            matched_entry = cached
-            source = "Persistent SQLite Cache"
-        else:
-            # 2. Coincidencia con base de conocimiento canónica
-            if "told you so" in clean_name_lower and "brooks" in clean_name_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["told you so - brooks remix"]
-            elif "loop" in clean_name_lower or "loop" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["loop"]
-            elif "so far away" in clean_name_lower or "so far away" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["so far away"]
-            elif "sun is never going down" in clean_name_lower or "sun is never going down" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["sun is never going down"]
-            elif "scared to be lonely" in clean_name_lower or "scared to be lonely" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["scared to be lonely"]
-            elif "told you so" in clean_name_lower or "told you so" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["told you so"]
-            elif "ocean" in clean_name_lower or "ocean" in tit2_lower:
-                matched_entry = CATALOG_KNOWLEDGE_BASE["ocean"]
+            # Validar que la caché no contenga un falso positivo obsoleto
+            cached_artists = [a.lower() for a in cached.get("main_artists", [])]
+            raw_artist = (raw["tpe1"] or (raw["clean_name"].split(" - ", 1)[0] if " - " in raw["clean_name"] else "")).lower()
+            if not raw_artist or any(ca in raw_artist or ca in raw["clean_name"].lower() for ca in cached_artists):
+                matched_entry = cached
+                source = "Persistent SQLite Cache"
+
+        if not matched_entry:
+            # 2. Coincidencia estricta con base de conocimiento canónica
+            matched_entry = self._match_catalog_entry(raw["clean_name"], raw["tpe1"], raw["tit2"])
 
         if matched_entry:
             main_artists = list(matched_entry["main_artists"])
@@ -302,33 +352,40 @@ class MetadataResolver:
             if not cached:
                 self._save_to_cache(cache_key, matched_entry, source)
         else:
-            # 3. Parser heurístico de respaldo inteligente
+            # 3. Parser heurístico de respaldo inteligente para pistas fuera del catálogo
             source = "Heuristic Tag Parser"
-            confidence = 0.8
-            raw_tpe1 = raw["tpe1"]
-            main_artists = [p.strip() for p in raw_tpe1.split(",") if p.strip()] if raw_tpe1 else ["Unknown Artist"]
+            confidence = 0.85
+            fn_artist = ""
+            fn_title = raw["clean_name"]
+            if " - " in raw["clean_name"]:
+                parts = raw["clean_name"].split(" - ", 1)
+                fn_artist = parts[0].strip()
+                fn_title = parts[1].strip()
+
+            raw_tpe1 = raw["tpe1"].strip() or fn_artist
+            main_artists = [p.strip() for p in re.split(r"[,/&]", raw_tpe1) if p.strip()] if raw_tpe1 else ["Unknown Artist"]
             guest_artists = []
             feat_artists = []
             remix_artists = []
-            title = raw["tit2"] or raw["clean_name"]
+            title = raw["tit2"].strip() or fn_title
             remix_name = None
 
             # Detectar feat y remix en título o nombre
-            feat_match = re.search(r"\b(?:feat\.|ft\.)\s+([^\-]+)", title, re.IGNORECASE)
+            feat_match = re.search(r"\b(?:feat\.|ft\.)\s+([^\-\(\)\[\]]+)", title, re.IGNORECASE)
             if feat_match:
-                feats = [f.strip() for f in feat_match.group(1).split("&")]
+                feats = [f.strip() for f in re.split(r"[,/&]", feat_match.group(1)) if f.strip()]
                 feat_artists.extend(feats)
-                title = re.sub(r"\b(?:feat\.|ft\.)\s+[^\-]+", "", title, flags=re.IGNORECASE).strip()
+                title = re.sub(r"\b(?:feat\.|ft\.)\s+[^\-\(\)\[\]]+", "", title, flags=re.IGNORECASE).strip(" -()[]")
 
-            remix_match = re.search(r"\b([^\-]+Remix)\b", title, re.IGNORECASE)
+            remix_match = re.search(r"\b([^\-\(\)\[\]]+Remix)\b", title, re.IGNORECASE)
             if remix_match:
                 remix_name = remix_match.group(1).strip()
-                title = title.replace(remix_name, "").strip(" -")
+                title = title.replace(remix_name, "").strip(" -()[]")
 
             album = raw["talb"] or title
             album_artists = main_artists
-            genre = raw["tcon"] or "Progressive House"
-            year = raw["tdrc"] or "2020"
+            genre = raw["tcon"] or "Electronic"
+            year = raw["tdrc"] or "2024"
 
         # Formateo de archivo proyectado
         track_dict = {
