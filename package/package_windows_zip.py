@@ -3,12 +3,14 @@
 package/package_windows_zip.py - Empaquetador Autónomo de PureTrack para Windows.
 
 Garantiza:
-1. Copia de todos los componentes esenciales, recursos multi-idioma (locales/) e icono (gui/assets/).
-2. Inclusión de binarios Windows de alta velocidad (ffmpeg.exe, ffprobe.exe, fpcalc.exe).
-3. Conversión forzada y estricta a finales de línea DOS/Windows (CRLF - \\r\\n) en todos los archivos
+1. Limpieza previa del directorio temporal para evitar archivos residuales obsoletos.
+2. Copia de todos los componentes esenciales actualizados, recursos multi-idioma (locales/),
+   icono definitivo (gui/assets/) y licencia GPLv3.
+3. Inclusión de binarios Windows de alta velocidad (ffmpeg.exe, ffprobe.exe, fpcalc.exe).
+4. Conversión forzada y estricta a finales de línea DOS/Windows (CRLF - \\r\\n) en todos los archivos
    .bat, .cmd, .txt, .md y .json para evitar errores de sintaxis en cmd.exe de Windows.
-4. Verificación de integridad binaria antes de comprimir.
-5. Generación atómica del archivo ZIP final (PureTrack_Windows.zip).
+5. Verificación de integridad binaria antes de comprimir.
+6. Generación atómica del archivo ZIP final (PureTrack_Windows.zip).
 """
 
 import sys
@@ -61,22 +63,28 @@ def prepare_and_zip():
     print(">>> PURETRACK: PREPARACIÓN Y EMPAQUETADO WINDOWS CON CRLF ESTRICTO")
     print("=" * 75)
 
+    # 0. Limpieza previa del directorio de trabajo para garantizar frescura
+    if DIST_WIN_DIR.exists():
+        shutil.rmtree(DIST_WIN_DIR)
+        print(f"[*] Directorio previo {DIST_WIN_DIR.name} limpiado.")
+
     DIST_WIN_DIR.mkdir(parents=True, exist_ok=True)
     bin_dir = DIST_WIN_DIR / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Asegurar binarios Windows en bin/
     source_bin = ROOT_DIR / "bin"
-    for b_name in ["ffmpeg.exe", "ffprobe.exe", "fpcalc.exe"]:
+    for b_name in ["ffmpeg.exe", "ffprobe.exe", "fpcalc.exe", "README.md"]:
         src_bin_file = source_bin / b_name
         dst_bin_file = bin_dir / b_name
-        if src_bin_file.exists() and not dst_bin_file.exists():
+        if src_bin_file.exists():
             shutil.copy2(src_bin_file, dst_bin_file)
-            print(f"[+] Copiado binario: {b_name}")
+            print(f"[+] Copiado a bin/: {b_name}")
 
     # 2. Copiar código fuente, scripts de lanzamiento y documentación actualizada
     win_scripts_dir = ROOT_DIR / "package" / "windows_scripts"
     files_to_copy = [
+        (ROOT_DIR / "LICENSE", DIST_WIN_DIR / "LICENSE"),
         (ROOT_DIR / "app.py", DIST_WIN_DIR / "app.py"),
         (ROOT_DIR / "config.json", DIST_WIN_DIR / "config.json"),
         (ROOT_DIR / "requirements.txt", DIST_WIN_DIR / "requirements.txt"),
@@ -92,15 +100,15 @@ def prepare_and_zip():
     for src, dst in files_to_copy:
         if src.exists():
             shutil.copy2(src, dst)
+            print(f"[+] Copiado: {src.name}")
 
-    # Copiar carpetas core, gui, package y locales
-    for folder in ["core", "gui", "package", "locales"]:
+    # Copiar carpetas core, gui, package, locales y scripts
+    for folder in ["core", "gui", "package", "locales", "scripts"]:
         src_f = ROOT_DIR / folder
         dst_f = DIST_WIN_DIR / folder
         if src_f.exists():
-            if dst_f.exists():
-                shutil.rmtree(dst_f)
-            shutil.copytree(src_f, dst_f, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            shutil.copytree(src_f, dst_f, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.spec"))
+            print(f"[+] Copiada carpeta: {folder}/")
 
     # 3. Aplicar conversión CRLF rigurosa a todos los archivos de texto
     print("\n[*] Aplicando conversión estricta a CRLF (\\r\\n) para compatibilidad con cmd.exe:")
@@ -124,7 +132,7 @@ def prepare_and_zip():
         ZIP_OUTPUT.unlink()
 
     with zipfile.ZipFile(ZIP_OUTPUT, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for file_path in DIST_WIN_DIR.rglob("*"):
+        for file_path in sorted(DIST_WIN_DIR.rglob("*")):
             if file_path.is_file() and "__pycache__" not in file_path.parts:
                 arcname = file_path.relative_to(ROOT_DIR)
                 zipf.write(file_path, arcname)

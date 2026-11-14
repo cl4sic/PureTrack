@@ -29,8 +29,8 @@ OPCIÓN A (Recomendada):
    👉 ejecutar_PureTrack.bat
 
 OPCIÓN B:
-   Entra en la carpeta generada:
-   👉 dist\PureTrack\PureTrack.exe
+   Ejecuta directamente el archivo único generado:
+   👉 dist\PureTrack.exe
    (Puedes crear un acceso directo en tu Escritorio a este archivo .exe).
 
 --------------------------------------------------------------------------------
