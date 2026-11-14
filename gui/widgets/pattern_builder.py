@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from core.config_manager import ConfigManager, SAMPLE_TRACK
+from core.i18n import t, get_i18n
 
 
 class PatternBuilder(QWidget):
@@ -46,6 +47,7 @@ class PatternBuilder(QWidget):
         super().__init__(parent)
         self.config_manager = config_manager
         self._init_ui()
+        self.retranslate_ui()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -55,7 +57,8 @@ class PatternBuilder(QWidget):
         # 1. Selector de Presets + Controles de Creación/Edición
         preset_layout = QHBoxLayout()
         preset_layout.setSpacing(6)
-        preset_layout.addWidget(QLabel("Preset:"))
+        self.lbl_preset = QLabel("Preset:")
+        preset_layout.addWidget(self.lbl_preset)
 
         self.preset_combo = QComboBox()
         self._reload_presets_combo()
@@ -63,19 +66,16 @@ class PatternBuilder(QWidget):
         preset_layout.addWidget(self.preset_combo, stretch=1)
 
         self.btn_save_preset = QPushButton("Guardar")
-        self.btn_save_preset.setToolTip("Guardar cambios del patrón en este preset")
         self.btn_save_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
         self.btn_save_preset.clicked.connect(self._save_current_preset)
         preset_layout.addWidget(self.btn_save_preset)
 
         self.btn_new_preset = QPushButton("+ Nuevo")
-        self.btn_new_preset.setToolTip("Crear un nuevo preset personalizado")
         self.btn_new_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
         self.btn_new_preset.clicked.connect(self._create_new_preset)
         preset_layout.addWidget(self.btn_new_preset)
 
         self.btn_delete_preset = QPushButton("Borrar")
-        self.btn_delete_preset.setToolTip("Eliminar el preset seleccionado")
         self.btn_delete_preset.setStyleSheet("padding: 3px 8px; font-size: 11px;")
         self.btn_delete_preset.clicked.connect(self._delete_current_preset)
         preset_layout.addWidget(self.btn_delete_preset)
@@ -91,9 +91,9 @@ class PatternBuilder(QWidget):
         layout.addWidget(self.pattern_input)
 
         # 3. Chips / Botones con tokens dinámicos
-        chips_label = QLabel("Tokens dinámicos (clic para insertar):")
-        chips_label.setStyleSheet("color: #8b8e98; font-size: 11px;")
-        layout.addWidget(chips_label)
+        self.chips_label = QLabel("Tokens dinámicos (clic para insertar):")
+        self.chips_label.setStyleSheet("color: #8b8e98; font-size: 11px;")
+        layout.addWidget(self.chips_label)
 
         chips_layout = QHBoxLayout()
         chips_layout.setSpacing(5)
@@ -143,9 +143,9 @@ class PatternBuilder(QWidget):
         pb_layout.setContentsMargins(8, 6, 8, 6)
         pb_layout.setSpacing(4)
 
-        prev_header = QLabel("Previsualización en tiempo real:")
-        prev_header.setStyleSheet("color: #ff9800; font-size: 11px; font-weight: bold;")
-        pb_layout.addWidget(prev_header)
+        self.prev_header = QLabel("Previsualización en tiempo real:")
+        self.prev_header.setStyleSheet("color: #ff9800; font-size: 11px; font-weight: bold;")
+        pb_layout.addWidget(self.prev_header)
 
         self.preview_label = QLabel()
         self.preview_label.setWordWrap(True)
@@ -156,6 +156,18 @@ class PatternBuilder(QWidget):
 
         # Actualizar previsualización inicial
         self._update_preview(self.pattern_input.text())
+
+    def retranslate_ui(self):
+        """Actualiza los textos del constructor de patrones según el idioma activo."""
+        self.lbl_preset.setText(t("inspector.presets_label"))
+        self.btn_save_preset.setText(t("buttons.save"))
+        self.btn_save_preset.setToolTip(t("buttons.save"))
+        self.btn_new_preset.setText(t("buttons.new"))
+        self.btn_new_preset.setToolTip(t("buttons.new"))
+        self.btn_delete_preset.setText(t("buttons.delete"))
+        self.btn_delete_preset.setToolTip(t("buttons.delete"))
+        self.chips_label.setText(t("inspector.tokens_label"))
+        self.prev_header.setText(t("inspector.preview_label"))
 
     def _insert_token(self, token: str):
         """Inserta el token en la posición actual del cursor."""

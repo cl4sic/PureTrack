@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-gui/main_window.py - Ventana Principal de la Suite AudioMaster (AIMP Dark Style).
+gui/main_window.py - Ventana Principal de la Suite PureTrack (AIMP Dark Style).
 
 Integra:
 1. Selector de ruta origen/destino con soporte universal Drag & Drop (carpetas o archivos .mp3).
-2. QSplitter redimensionable:
+2. Selector interactivo multi-idioma (i18n: Auto, Español, English) con cambio en caliente.
+3. QSplitter redimensionable:
    - Izquierda: Tabla reactiva de pistas con Badges de estado, menú contextual y edición.
    - Derecha: Panel inspector colapsable con PatternBuilder y toggles de auditoría.
-3. Panel inferior de telemetría, progreso dual, consola de logs y botones de acción.
-4. Conexión no bloqueante con QThread workers (AuditWorker, EnrichWorker, ApplyWorker, RollbackWorker).
+4. Panel inferior de telemetría, progreso dual, consola de logs y botones de acción.
+5. Conexión no bloqueante con QThread workers (AuditWorker, EnrichWorker, ApplyWorker, RollbackWorker).
 """
 
+import sys
 from pathlib import Path
 from typing import List, Dict, Optional, Any, Tuple
 
@@ -26,6 +28,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QComboBox,
     QFileDialog,
     QMessageBox,
     QMenu,
@@ -41,6 +44,7 @@ from core.config_manager import ConfigManager
 from core.common_utils import sanitize_windows_filename
 from core.auditor import AudioAuditResult
 from core.resolver import ResolvedMetadata
+from core.i18n import get_i18n, t
 from gui.widgets.audio_badge import AudioBadge
 from gui.widgets.inspector_panel import InspectorPanel
 from gui.widgets.progress_panel import ProgressPanel
@@ -53,7 +57,8 @@ class TrackDetailsDialog(QDialog):
 
     def __init__(self, data: Dict[str, Any], parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Inspección Técnica - {data.get('filename', 'Pista')}")
+        fname = data.get('filename', 'Pista')
+        self.setWindowTitle(t("dialogs.details_title", filename=fname))
         self.resize(580, 480)
         layout = QVBoxLayout(self)
 
@@ -64,10 +69,10 @@ class TrackDetailsDialog(QDialog):
         meta: Optional[ResolvedMetadata] = data.get("resolved_metadata")
 
         html = [
-            f"<h2 style='color:#ff9800;'>{data.get('filename')}</h2>",
+            f"<h2 style='color:#ff9800;'>{fname}</h2>",
             f"<p><b>Ruta:</b> <span style='font-family:monospace;'>{data.get('filepath')}</span></p>",
             "<hr style='border:1px solid #2e3036;'>",
-            "<h3>Diagnóstico Acústico (Auditoría)</h3>",
+            f"<h3>{t('dialogs.tab_acoustic')}</h3>",
             "<ul>"
         ]
 
@@ -89,9 +94,9 @@ class TrackDetailsDialog(QDialog):
 
         html.extend([
             "<hr style='border:1px solid #2e3036;'>",
-            "<h3>Metadatos y Proyección de Renombrado</h3>",
+            f"<h3>{t('dialogs.tab_id3')}</h3>",
             "<ul>"
-        ])
+        ] )
 
         if meta:
             html.extend([
@@ -114,13 +119,13 @@ class TrackDetailsDialog(QDialog):
         browser.setHtml("".join(html))
         layout.addWidget(browser)
 
-        btn_close = QPushButton("Cerrar")
+        btn_close = QPushButton(t("buttons.close"))
         btn_close.clicked.connect(self.accept)
         layout.addWidget(btn_close)
 
 
 class MainWindow(QMainWindow):
-    """Ventana Principal AudioMaster Suite."""
+    """Ventana Principal PureTrack Suite."""
 
     COL_STATUS = 0
     COL_ORIGINAL = 1
@@ -139,12 +144,35 @@ class MainWindow(QMainWindow):
         self.tracks_data: Dict[str, Dict[str, Any]] = {}
         self.selected_directory: Optional[Path] = None
 
-        self.setWindowTitle("AudioMaster - Suite Profesional de Sanación y Etiquetado")
         self.resize(1260, 780)
         self.setAcceptDrops(True)
 
+        # Cargar icono de aplicación oficial
+        self._set_app_icon()
+
         self._init_ui()
+        self.retranslate_ui()
         self._load_initial_directory()
+
+    def _set_app_icon(self):
+        """Asigna el icono oficial PureTrack a la ventana."""
+        candidates = [
+            Path(__file__).resolve().parent / "assets" / "icon.ico",
+            Path(__file__).resolve().parent / "assets" / "icon.png",
+            Path(__file__).resolve().parent.parent / "gui" / "assets" / "icon.ico",
+            Path(__file__).resolve().parent.parent / "gui" / "assets" / "icon.png",
+        ]
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            meipass = Path(sys._MEIPASS)
+            candidates.insert(0, meipass / "gui" / "assets" / "icon.ico")
+            candidates.insert(1, meipass / "gui" / "assets" / "icon.png")
+
+        for c in candidates:
+            if c.exists():
+                icon = QIcon(str(c))
+                if not icon.isNull():
+                    self.setWindowIcon(icon)
+                    break
 
     def _init_ui(self):
         central_widget = QWidget()
@@ -161,32 +189,73 @@ class MainWindow(QMainWindow):
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(8)
 
-        lbl_dir = QLabel("Directorio Origen:")
-        lbl_dir.setStyleSheet("font-weight: bold; color: #ff9800;")
-        top_layout.addWidget(lbl_dir)
+        self.lbl_dir = QLabel("Directorio Origen:")
+        self.lbl_dir.setStyleSheet("font-weight: bold; color: #ff9800;")
+        top_layout.addWidget(self.lbl_dir)
 
         self.path_input = QLineEdit()
         self.path_input.setPlaceholderText("Arrastre una carpeta o archivos MP3 aquí, o examine...")
         self.path_input.returnPressed.connect(self._on_path_entered)
         top_layout.addWidget(self.path_input, stretch=1)
 
-        btn_browse = QPushButton("Examinar...")
-        btn_browse.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogOpenButton))
-        btn_browse.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_browse.clicked.connect(self._browse_directory)
-        top_layout.addWidget(btn_browse)
+        self.btn_browse = QPushButton("Examinar...")
+        self.btn_browse.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_DialogOpenButton))
+        self.btn_browse.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_browse.clicked.connect(self._browse_directory)
+        top_layout.addWidget(self.btn_browse)
 
-        btn_refresh = QPushButton("Recargar")
-        btn_refresh.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_BrowserReload))
-        btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_refresh.clicked.connect(self._reload_current_directory)
-        top_layout.addWidget(btn_refresh)
+        self.btn_refresh = QPushButton("Recargar")
+        self.btn_refresh.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_BrowserReload))
+        self.btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_refresh.clicked.connect(self._reload_current_directory)
+        top_layout.addWidget(self.btn_refresh)
 
         # Selector de Tema (Ámbar / Cian)
         self.btn_theme = QPushButton("Tema: Ámbar")
         self.btn_theme.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_theme.clicked.connect(self._toggle_theme)
         top_layout.addWidget(self.btn_theme)
+
+        # Selector de Idioma Multi-idioma (Auto, Español, English)
+        self.combo_language = QComboBox()
+        self.combo_language.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.combo_language.setStyleSheet("""
+            QComboBox {
+                background-color: #222327;
+                color: #d1d5db;
+                border: 1px solid #373a44;
+                border-radius: 4px;
+                padding: 3px 8px;
+                font-size: 11px;
+            }
+            QComboBox:hover {
+                border-color: #00b4d8;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 16px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #1a1b1f;
+                color: #ffffff;
+                selection-background-color: #00b4d8;
+                selection-color: #000000;
+            }
+        """)
+        self.combo_language.addItem("Auto (Sistema)", "auto")
+        self.combo_language.addItem("Español", "es")
+        self.combo_language.addItem("English", "en")
+
+        cfg_lang = self.config_manager.get("ui_preferences", "language", "auto")
+        if cfg_lang == "es":
+            self.combo_language.setCurrentIndex(1)
+        elif cfg_lang == "en":
+            self.combo_language.setCurrentIndex(2)
+        else:
+            self.combo_language.setCurrentIndex(0)
+
+        self.combo_language.currentIndexChanged.connect(self._on_language_combo_changed)
+        top_layout.addWidget(self.combo_language)
 
         main_layout.addWidget(top_frame)
 
@@ -376,9 +445,9 @@ class MainWindow(QMainWindow):
             self.table.setItem(idx, self.COL_CLIPPING, QTableWidgetItem("—"))
 
             # Acción
-            self.table.setItem(idx, self.COL_ACTION, QTableWidgetItem("En espera"))
+            self.table.setItem(idx, self.COL_ACTION, QTableWidgetItem(t("table.empty_pending")))
 
-        self.lbl_table_count.setText(f"Pistas detectadas: {len(files)}")
+        self.lbl_table_count.setText(t("table.tracks_count", count=len(files)))
         self.progress_panel.append_log("INFO", f"Cargados {len(files)} archivos MP3 desde {self.selected_directory or 'lista'}")
 
     # -----------------------------------------------------------------
@@ -388,7 +457,7 @@ class MainWindow(QMainWindow):
         """Inicia el análisis de calidad acústica e integridad sin bloquear la UI."""
         files = [Path(fp) for fp, d in self.tracks_data.items() if not d.get("excluded", False)]
         if not files:
-            QMessageBox.information(self, "Sin pistas", "No hay archivos MP3 disponibles para auditar.")
+            QMessageBox.information(self, t("dialogs.no_tracks_title"), t("dialogs.no_tracks_msg"))
             return
 
         self.progress_panel.set_operation_active(True)
@@ -409,7 +478,7 @@ class MainWindow(QMainWindow):
         """Simula la resolución de metadatos y el renombrado."""
         files = [Path(fp) for fp, d in self.tracks_data.items() if not d.get("excluded", False)]
         if not files:
-            QMessageBox.information(self, "Sin pistas", "No hay archivos para simular.")
+            QMessageBox.information(self, t("dialogs.no_tracks_title"), t("dialogs.no_dry_run_tracks"))
             return
 
         self.progress_panel.set_operation_active(True)
@@ -448,16 +517,14 @@ class MainWindow(QMainWindow):
             operations.append((meta, src_path, dest_path))
 
         if not operations:
-            QMessageBox.warning(self, "Aviso", "No hay operaciones válidas para aplicar.")
+            QMessageBox.warning(self, t("dialogs.no_tracks_title"), t("dialogs.no_apply_tracks"))
             return
 
         # Confirmación de seguridad
         confirm = QMessageBox.question(
             self,
-            "Confirmar Escritura en Disco",
-            f"Se aplicarán modificaciones y renombrado en {len(operations)} archivo(s).\n\n"
-            "Se creará automáticamente un log transaccional previo para permitir Rollback.\n\n"
-            "¿Desea continuar?",
+            t("dialogs.confirm_apply_title"),
+            t("dialogs.confirm_apply_msg", count=len(operations)),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -479,9 +546,8 @@ class MainWindow(QMainWindow):
         """Ejecuta la restauración / reversión a partir del archivo de registro."""
         confirm = QMessageBox.warning(
             self,
-            "Confirmar Rollback",
-            "¿Desea restaurar los nombres de archivo y etiquetas originales a partir del último registro?\n\n"
-            "Esta operación revertirá los cambios aplicados.",
+            t("dialogs.confirm_rollback_title"),
+            t("dialogs.confirm_rollback_msg"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -612,7 +678,7 @@ class MainWindow(QMainWindow):
         if not data.get("has_custom_name"):
             self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(res.verdict_reason[:35] + ("..." if len(res.verdict_reason) > 35 else "")))
         else:
-            item_act = QTableWidgetItem("Personalizado")
+            item_act = QTableWidgetItem(t("table.action_custom"))
             item_act.setForeground(QColor("#00b4d8"))
             self.table.setItem(row, self.COL_ACTION, item_act)
 
@@ -637,7 +703,7 @@ class MainWindow(QMainWindow):
         item_proj.setToolTip(f"Proyectado: {meta.new_filename}\nFuente: {meta.source}")
         self.table.setItem(row, self.COL_PROJECTED, item_proj)
         if not data.get("has_custom_name"):
-            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Proyectado"))
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(t("table.action_projected")))
 
     def _on_track_applied(self, orig_name: str, new_name: str, success: bool, message: str):
         # Localizar fila por nombre original
@@ -657,7 +723,7 @@ class MainWindow(QMainWindow):
                 self.table.setItem(row, self.COL_PROJECTED, item_proj)
 
                 # Acción
-                act_item = QTableWidgetItem("Actualizado en disco" if success else message)
+                act_item = QTableWidgetItem(t("table.action_applied") if success else message)
                 act_item.setForeground(QColor("#4caf50" if success else "#f44336"))
                 self.table.setItem(row, self.COL_ACTION, act_item)
 
@@ -679,17 +745,17 @@ class MainWindow(QMainWindow):
         self.progress_panel.set_operation_active(False)
         self.current_worker = None
         self.progress_panel.append_log("SUCCESS" if success else "ERROR", summary)
-        QMessageBox.information(self, "Proceso Finalizado", summary)
+        QMessageBox.information(self, t("dialogs.process_finished"), summary)
         # No recargar la tabla para conservar las filas visualmente en estado APLICADO y sus nombres finales
 
     def _on_rollback_finished(self, success: bool, summary: str):
         self.progress_panel.set_operation_active(False)
         self.current_worker = None
         if success:
-            QMessageBox.information(self, "Rollback Exitoso", summary)
+            QMessageBox.information(self, t("dialogs.rollback_success"), summary)
             self._reload_current_directory()
         else:
-            QMessageBox.critical(self, "Error en Rollback", summary)
+            QMessageBox.critical(self, t("dialogs.rollback_error"), summary)
 
     # -----------------------------------------------------------------
     # MENÚ CONTEXTUAL E INTERACCIÓN
@@ -708,16 +774,16 @@ class MainWindow(QMainWindow):
         is_excluded = data.get("excluded", False)
 
         menu = QMenu(self)
-        action_inspect = QAction("🔍 Inspeccionar detalles técnicos", self)
+        action_inspect = QAction(t("context_menu.inspect"), self)
         action_inspect.triggered.connect(lambda: self._inspect_track(data))
         menu.addAction(action_inspect)
 
-        action_edit = QAction("✏️ Asignar nombre personalizado...", self)
+        action_edit = QAction(t("context_menu.custom_name"), self)
         action_edit.triggered.connect(lambda: self._edit_track_manually(row, data))
         menu.addAction(action_edit)
 
         if data.get("has_custom_name"):
-            action_revert = QAction("🔄 Restablecer a patrón automático", self)
+            action_revert = QAction(t("context_menu.revert_pattern"), self)
             action_revert.triggered.connect(lambda: self._revert_to_pattern(row, data))
             menu.addAction(action_revert)
 
@@ -725,9 +791,9 @@ class MainWindow(QMainWindow):
 
         # Interruptor dinámico bidireccional Excluir / Incluir
         if is_excluded:
-            action_exclude = QAction("➕ Incluir en el lote", self)
+            action_exclude = QAction(t("context_menu.include"), self)
         else:
-            action_exclude = QAction("⊘ Excluir del lote", self)
+            action_exclude = QAction(t("context_menu.exclude"), self)
 
         action_exclude.triggered.connect(lambda: self._toggle_exclude_track(row, data))
         menu.addAction(action_exclude)
@@ -771,9 +837,8 @@ class MainWindow(QMainWindow):
 
         new_name, ok = QInputDialog.getText(
             self,
-            "Editar Nombre Personalizado",
-            "Introduce el nuevo nombre para esta pista (sin extensión):\n"
-            "(Este nombre quedará fijado y se aplicará tal cual en disco)",
+            t("dialogs.custom_name_title"),
+            t("dialogs.custom_name_prompt"),
             text=current
         )
         if ok and new_name.strip():
@@ -807,7 +872,7 @@ class MainWindow(QMainWindow):
             item_proj.setFont(font)
             self.table.setItem(row, self.COL_PROJECTED, item_proj)
 
-            item_act = QTableWidgetItem("Personalizado")
+            item_act = QTableWidgetItem(t("table.action_custom"))
             item_act.setForeground(QColor("#00b4d8"))
             self.table.setItem(row, self.COL_ACTION, item_act)
 
@@ -840,7 +905,7 @@ class MainWindow(QMainWindow):
             item_proj = QTableWidgetItem(recomputed)
             item_proj.setToolTip(f"Proyectado: {recomputed}\nFuente: {meta.source}")
             self.table.setItem(row, self.COL_PROJECTED, item_proj)
-            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Activo"))
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(t("table.action_active")))
             self.progress_panel.append_log("INFO", f"Pista '{data.get('filename')}' restablecida a patrón automático.")
 
     def _toggle_exclude_track(self, row: int, data: Dict[str, Any]):
@@ -859,7 +924,7 @@ class MainWindow(QMainWindow):
 
             badge = AudioBadge("EXCLUIDA")
             self.table.setCellWidget(row, self.COL_STATUS, badge)
-            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem("Excluido"))
+            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(t("table.action_excluded")))
             self.progress_panel.append_log("WARNING", f"Pista excluida del lote: '{data.get('filename')}'")
         else:
             restored_status = data.get("pre_exclude_status", data.get("status", "PENDIENTE"))
@@ -880,9 +945,9 @@ class MainWindow(QMainWindow):
                 act_it = self.table.item(row, self.COL_ACTION)
                 if act_it:
                     act_it.setForeground(QColor("#00b4d8"))
-                    act_it.setText("Personalizado")
+                    act_it.setText(t("table.action_custom"))
             else:
-                act_text = "En espera" if restored_status == "PENDIENTE" else "Activo"
+                act_text = t("table.empty_pending") if restored_status == "PENDIENTE" else t("table.action_active")
                 self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(act_text))
 
             badge = AudioBadge(restored_status)
@@ -925,7 +990,78 @@ class MainWindow(QMainWindow):
         current_theme = self.config_manager.get("ui_preferences", "accent_theme", "amber")
         new_theme = "cyan" if current_theme == "amber" else "amber"
         self.config_manager.set("ui_preferences", "accent_theme", new_theme)
-        self.btn_theme.setText("Tema: Cian" if new_theme == "cyan" else "Tema: Ámbar")
+        self.btn_theme.setText(t("top_bar.theme_cyan") if new_theme == "cyan" else t("top_bar.theme_amber"))
         app = QApplication.instance()
         if app:
             app.setStyleSheet(load_stylesheet(new_theme))
+
+    def _on_language_combo_changed(self, index: int):
+        """Manejador del cambio de idioma en caliente."""
+        code = self.combo_language.itemData(index)
+        if code:
+            get_i18n().set_language(code, save_to_config=True)
+            self.retranslate_ui()
+
+    def retranslate_ui(self):
+        """Actualiza instantáneamente todos los textos de la interfaz al cambiar de idioma."""
+        self.setWindowTitle(t("app.title"))
+        self.lbl_dir.setText(t("top_bar.source_dir"))
+        self.path_input.setPlaceholderText(t("top_bar.path_placeholder"))
+        self.btn_browse.setText(t("top_bar.browse_btn"))
+        self.btn_browse.setToolTip(t("top_bar.browse_tooltip"))
+        self.btn_refresh.setText(t("top_bar.refresh_btn"))
+        self.btn_refresh.setToolTip(t("top_bar.refresh_btn"))
+
+        current_theme = self.config_manager.get("ui_preferences", "accent_theme", "amber")
+        self.btn_theme.setText(t("top_bar.theme_cyan") if current_theme == "cyan" else t("top_bar.theme_amber"))
+
+        # Actualizar textos del combo de idioma sin disparar eventos en bucle
+        self.combo_language.blockSignals(True)
+        self.combo_language.setItemText(0, t("top_bar.lang_auto"))
+        self.combo_language.setItemText(1, t("top_bar.lang_es"))
+        self.combo_language.setItemText(2, t("top_bar.lang_en"))
+        self.combo_language.blockSignals(False)
+
+        visible = self.inspector.isVisible()
+        self.btn_toggle_inspector.setText(t("top_bar.toggle_inspector_hide") if visible else t("top_bar.toggle_inspector_show"))
+
+        # Cabeceras de tabla
+        self.table.setHorizontalHeaderLabels([
+            t("table.col_status"),
+            t("table.col_original"),
+            t("table.col_projected"),
+            t("table.col_bitrate"),
+            t("table.col_duration"),
+            t("table.col_clipping"),
+            t("table.col_action")
+        ])
+
+        # Contador de pistas
+        self.lbl_table_count.setText(t("table.tracks_count", count=self.table.rowCount()))
+
+        # Retraducir filas existentes en la tabla
+        for row in range(self.table.rowCount()):
+            badge_w = self.table.cellWidget(row, self.COL_STATUS)
+            if isinstance(badge_w, AudioBadge):
+                badge_w.retranslate_ui()
+
+            # Retraducir texto de acción estándar si aplica
+            act_item = self.table.item(row, self.COL_ACTION)
+            if act_item:
+                raw_txt = act_item.text().strip().lower()
+                if raw_txt in ("en espera", "waiting"):
+                    act_item.setText(t("table.empty_pending"))
+                elif raw_txt in ("proyectado", "projected"):
+                    act_item.setText(t("table.action_projected"))
+                elif raw_txt in ("personalizado", "custom"):
+                    act_item.setText(t("table.action_custom"))
+                elif raw_txt in ("actualizado en disco", "updated on disk"):
+                    act_item.setText(t("table.action_applied"))
+                elif raw_txt in ("excluido", "excluded"):
+                    act_item.setText(t("table.action_excluded"))
+                elif raw_txt in ("activo", "active"):
+                    act_item.setText(t("table.action_active"))
+
+        # Retraducir paneles hijos
+        self.inspector.retranslate_ui()
+        self.progress_panel.retranslate_ui()

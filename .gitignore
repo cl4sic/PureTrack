@@ -20,4 +20,5 @@ output/metadata_cache.db
 *.so
 bin/
 AudioMaster_Windows/
+PureTrack_Windows/
 *.mp3

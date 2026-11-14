@@ -14,6 +14,8 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 
+from core.i18n import get_i18n, t
+
 
 class AudioBadge(QWidget):
     """Badge píldora estilizado con icono y texto de estado para la tabla de pistas."""
@@ -31,6 +33,7 @@ class AudioBadge(QWidget):
 
     def __init__(self, status: str = "PENDIENTE", parent=None):
         super().__init__(parent)
+        self._raw_status = status
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 2, 6, 2)
         layout.setSpacing(4)
@@ -42,20 +45,13 @@ class AudioBadge(QWidget):
         self.set_status(status)
 
     def set_status(self, status: str):
+        self._raw_status = status
         st = status.upper().strip()
         cfg = self.COLORS.get(st, self.COLORS["PENDIENTE"])
-        if "EXCLUID" in st:
-            display_text = "EXCLUIDA"
-        elif st in ("APTA", "OK"):
-            display_text = "APTA"
-        elif "REVIS" in st or "ALERT" in st or "WARN" in st:
-            display_text = "ALERTA"
-        elif "ELIMIN" in st or "ERR" in st:
-            display_text = "ERROR"
-        elif "APLIC" in st:
-            display_text = "APLICADO"
-        else:
-            display_text = st
+
+        # Traducir texto del badge dinámicamente según i18n
+        display_text = get_i18n().get_badge_text(st)
+
         self.label.setText(f"{cfg['icon']} {display_text}")
         self.setStyleSheet(f"""
             QWidget {{
@@ -72,3 +68,7 @@ class AudioBadge(QWidget):
                 padding: 1px 3px;
             }}
         """)
+
+    def retranslate_ui(self):
+        """Actualiza el texto del badge cuando cambia el idioma de la aplicación."""
+        self.set_status(self._raw_status)

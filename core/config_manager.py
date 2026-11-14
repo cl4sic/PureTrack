@@ -6,11 +6,11 @@ Maneja la persistencia en formato JSON (UTF-8) para:
 - Patrones de renombrado dinámicos ({artist}, {feat}, {title}, {remix}, {album}, {year}, {genre}).
 - Mapeo configurable de etiquetas ID3v2.
 - Umbrales y toggles de auditoría técnica (clipping, silencios, cortes abruptos, bitrate, duración).
-- Preferencias de interfaz (tema ámbar/cian, última carpeta utilizada, dry-run).
+- Preferencias de interfaz (idioma, tema ámbar/cian, última carpeta utilizada, dry-run).
 
 Prioridad de almacenamiento:
 1. Archivo local config.json (modo portable si existe).
-2. QStandardPaths.AppConfigLocation / AudioMaster / config.json.
+2. QStandardPaths.AppConfigLocation / PureTrack / config.json.
 """
 
 import os
@@ -58,6 +58,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "min_duration_sec": 60.0
     },
     "ui_preferences": {
+        "language": "auto",       # "auto", "es", "en"
         "accent_theme": "amber",  # "amber" (#ff9800) o "cyan" (#00b4d8)
         "last_source_dir": "",
         "last_target_dir": "",
@@ -105,13 +106,29 @@ class ConfigManager:
         try:
             if HAS_QT:
                 base_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation)
-                target_dir = Path(base_dir) / "AudioMaster"
+                target_dir = Path(base_dir) / "PureTrack"
             else:
                 if sys.platform.startswith("win"):
                     appdata = os.getenv("APPDATA", str(Path.home() / "AppData" / "Roaming"))
-                    target_dir = Path(appdata) / "AudioMaster"
+                    target_dir = Path(appdata) / "PureTrack"
                 else:
-                    target_dir = Path.home() / ".config" / "AudioMaster"
+                    target_dir = Path.home() / ".config" / "PureTrack"
+
+            # Migración automática transparente si existe configuración previa de AudioMaster
+            old_dirs = []
+            if HAS_QT:
+                old_dirs.append(Path(base_dir) / "AudioMaster")
+            if sys.platform.startswith("win"):
+                old_dirs.append(Path(os.getenv("APPDATA", "")) / "AudioMaster")
+            else:
+                old_dirs.append(Path.home() / ".config" / "AudioMaster")
+
+            for od in old_dirs:
+                if od.exists() and (od / "config.json").exists() and not (target_dir / "config.json").exists():
+                    target_dir.mkdir(parents=True, exist_ok=True)
+                    import shutil
+                    shutil.copy2(od / "config.json", target_dir / "config.json")
+                    break
 
             target_dir.mkdir(parents=True, exist_ok=True)
             # Verificar permiso real de escritura

@@ -25,7 +25,7 @@ from core.config_manager import ConfigManager
 
 try:
     import musicbrainzngs
-    musicbrainzngs.set_useragent("AudioMasterSuite", "2.0.0", "contact@audiomaster.local")
+    musicbrainzngs.set_useragent("PureTrackSuite", "2.0.0", "contact@puretrack.local")
 except ImportError:
     musicbrainzngs = None
 

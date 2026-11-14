@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from core.config_manager import ConfigManager
+from core.i18n import t, get_i18n
 from gui.widgets.pattern_builder import PatternBuilder
 
 
@@ -35,6 +36,7 @@ class InspectorPanel(QWidget):
         super().__init__(parent)
         self.config_manager = config_manager
         self._init_ui()
+        self.retranslate_ui()
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -54,21 +56,21 @@ class InspectorPanel(QWidget):
         # -------------------------------------------------------------
         # 1. SECCIÓN: CONSTRUCTOR DE PATRONES
         # -------------------------------------------------------------
-        pattern_group = QGroupBox("Formato de Nombres (Pattern Builder)")
-        pg_layout = QVBoxLayout(pattern_group)
+        self.pattern_group = QGroupBox("Formato de Nombres (Pattern Builder)")
+        pg_layout = QVBoxLayout(self.pattern_group)
         pg_layout.setContentsMargins(10, 14, 10, 10)
         pg_layout.setSpacing(8)
 
         self.pattern_builder = PatternBuilder(self.config_manager)
         self.pattern_builder.pattern_changed.connect(lambda: self.settings_changed.emit())
         pg_layout.addWidget(self.pattern_builder)
-        layout.addWidget(pattern_group)
+        layout.addWidget(self.pattern_group)
 
         # -------------------------------------------------------------
         # 2. SECCIÓN: UMBRALES Y TOGGLES DE AUDITORÍA ACÚSTICA
         # -------------------------------------------------------------
-        audit_group = QGroupBox("Criterios de Auditoría y Diagnóstico")
-        ag_layout = QVBoxLayout(audit_group)
+        self.audit_group = QGroupBox("Criterios de Auditoría y Diagnóstico")
+        ag_layout = QVBoxLayout(self.audit_group)
         ag_layout.setContentsMargins(10, 14, 10, 10)
         ag_layout.setSpacing(10)
 
@@ -122,13 +124,13 @@ class InspectorPanel(QWidget):
         self.slider_duration.valueChanged.connect(self._on_duration_slider_changed)
         ag_layout.addWidget(self.slider_duration)
 
-        layout.addWidget(audit_group)
+        layout.addWidget(self.audit_group)
 
         # -------------------------------------------------------------
         # 3. SECCIÓN: MAPEO CONFIGURABLE DE ETIQUETAS ID3v2
         # -------------------------------------------------------------
-        id3_group = QGroupBox("Mapeo de Etiquetas ID3v2")
-        id3_layout = QVBoxLayout(id3_group)
+        self.id3_group = QGroupBox("Mapeo de Etiquetas ID3v2")
+        id3_layout = QVBoxLayout(self.id3_group)
         id3_layout.setContentsMargins(10, 14, 10, 10)
         id3_layout.setSpacing(6)
 
@@ -154,11 +156,23 @@ class InspectorPanel(QWidget):
             row.addWidget(line)
             id3_layout.addLayout(row)
 
-        layout.addWidget(id3_group)
+        layout.addWidget(self.id3_group)
         layout.addStretch()
 
         scroll.setWidget(content)
         main_layout.addWidget(scroll)
+
+    def retranslate_ui(self):
+        """Actualiza los textos del panel de ajustes e inspector según el idioma activo."""
+        self.pattern_group.setTitle(t("inspector.naming_title"))
+        self.audit_group.setTitle(t("inspector.audit_rules_title"))
+        self.id3_group.setTitle(t("inspector.title"))
+        self.chk_clipping.setText(t("inspector.chk_clipping"))
+        self.chk_silence.setText(t("inspector.chk_silence"))
+        self.chk_abrupt.setText(t("inspector.chk_abrupt"))
+        self.lbl_bitrate.setText(f"{t('inspector.min_bitrate')} {self.slider_bitrate.value()} kbps")
+        self.lbl_duration.setText(f"{t('inspector.min_duration')} {self.slider_duration.value()}s")
+        self.pattern_builder.retranslate_ui()
 
     def _on_audit_toggle_changed(self):
         self.config_manager.set("audit_thresholds", "check_clipping", self.chk_clipping.isChecked(), auto_save=False)

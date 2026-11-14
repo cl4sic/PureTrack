@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QTextCursor, QColor
+from core.i18n import t, get_i18n
 
 
 class ProgressPanel(QWidget):
@@ -38,6 +39,7 @@ class ProgressPanel(QWidget):
         super().__init__(parent)
         self._is_paused = False
         self._init_ui()
+        self.retranslate_ui()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -256,6 +258,18 @@ class ProgressPanel(QWidget):
         self.bar_global.setValue(0)
         self.lbl_track_pct.setText("0%")
         self.lbl_global_pct.setText("0%")
-        self.lbl_current_track.setText("Pista actual: En espera")
-        self.lbl_global_status.setText("Progreso del lote: Listo")
+        self.lbl_current_track.setText(f"{t('progress.current_item')} {t('table.empty_pending')}")
+        self.lbl_global_status.setText(f"{t('progress.overall')} {t('progress.ready')}")
         self.lbl_eta.setText("ETA: --:-- | 0.0 fps")
+
+    def retranslate_ui(self):
+        """Actualiza los textos del panel de progreso y botones según el idioma activo."""
+        self.btn_audit.setText(t("buttons.audit"))
+        self.btn_dry_run.setText(t("buttons.dry_run"))
+        self.btn_apply.setText(t("buttons.apply"))
+        self.btn_rollback.setText(t("buttons.rollback"))
+        self.btn_pause.setText(t("buttons.resume") if self._is_paused else t("buttons.pause"))
+        self.btn_cancel.setText(t("buttons.cancel"))
+        is_visible = self.log_console.isVisible()
+        c_name = t("progress.console_title", "Consola").split()[0]
+        self.btn_toggle_log.setText(f"{c_name} ▼" if is_visible else f"{c_name} ▲")

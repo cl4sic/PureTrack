@@ -34,7 +34,7 @@ def check_pyinstaller() -> bool:
 
 def build_release(mode: str = "onedir", windowed: bool = True):
     print("=" * 75)
-    print(">>> AUDIOMASTER - PROCESO DE COMPILACIÓN Y EMPAQUETADO MULTIPLATAFORMA")
+    print(">>> PURETRACK - PROCESO DE COMPILACIÓN Y EMPAQUETADO MULTIPLATAFORMA")
     print("=" * 75)
 
     if not check_pyinstaller():
@@ -44,7 +44,7 @@ def build_release(mode: str = "onedir", windowed: bool = True):
 
     is_windows = sys.platform.startswith("win")
     sep = ";" if is_windows else ":"
-    target_name = "AudioMaster"
+    target_name = "PureTrack"
 
     # Preparar parámetros de PyInstaller optimizados
     cmd = [
@@ -70,15 +70,24 @@ def build_release(mode: str = "onedir", windowed: bool = True):
         "--collect-all", "numpy",
     ]
 
+    # Icono oficial multiplataforma
+    ico_path = ROOT_DIR / "gui" / "assets" / "icon.ico"
+    png_path = ROOT_DIR / "gui" / "assets" / "icon.png"
+    if is_windows and ico_path.exists():
+        cmd.extend(["--icon", str(ico_path)])
+    elif png_path.exists():
+        cmd.extend(["--icon", str(png_path)])
+
     if windowed:
         cmd.append("--windowed")
         if is_windows:
             cmd.append("--noconsole")
 
-    # Añadir módulos de core y gui
+    # Añadir módulos de core, gui y locales
     cmd.extend([
         "--add-data", f"{ROOT_DIR / 'core'}{sep}core",
         "--add-data", f"{ROOT_DIR / 'gui'}{sep}gui",
+        "--add-data", f"{ROOT_DIR / 'locales'}{sep}locales",
     ])
 
     # Si existe carpeta bin, incluirla en el paquete
@@ -104,7 +113,7 @@ def build_release(mode: str = "onedir", windowed: bool = True):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compilador PyInstaller para AudioMaster Suite")
+    parser = argparse.ArgumentParser(description="Compilador PyInstaller para PureTrack Suite")
     parser.add_argument("--mode", choices=["onedir", "onefile"], default="onedir", help="Modo de empaquetado")
     parser.add_argument("--console", action="store_true", help="Mantener ventana de consola para depuración")
     args = parser.parse_args()

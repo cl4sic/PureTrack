@@ -1,8 +1,8 @@
 ================================================================================
-                  AUDIOMASTER SUITE - GUÍA RÁPIDA DE WINDOWS
+                  PURETRACK SUITE - GUÍA RÁPIDA DE WINDOWS
 ================================================================================
 
-¡Bienvenido a AudioMaster Suite! Sigue estos sencillos pasos para compilar y
+¡Bienvenido a PureTrack Suite! Sigue estos sencillos pasos para compilar y
 ejecutar la aplicación en Windows de la forma más rápida y directa:
 
 --------------------------------------------------------------------------------
@@ -13,9 +13,10 @@ PASO 1: COMPILAR Y EJECUTAR (1 SOLO CLIC)
    👉 compilar_exe_en_windows.bat
 
 2. El asistente comprobará Python, instalará las dependencias necesarias y
-   generará automáticamente el ejecutable portátil sin necesidad de comandos.
+   generará automáticamente el ejecutable portátil con icono personalizado
+   y soporte multi-idioma (i18n) sin necesidad de escribir comandos.
 
-3. Al finalizar, la consola te preguntará si deseas abrir AudioMaster inmediatamente.
+3. Al finalizar, la consola te preguntará si deseas abrir PureTrack inmediatamente.
    Escribe "S" y pulsa Enter.
 
 --------------------------------------------------------------------------------
@@ -25,11 +26,11 @@ Una vez compilado, puedes abrir la aplicación de dos formas muy sencillas:
 
 OPCIÓN A (Recomendada):
    Haz doble clic sobre:
-   👉 ejecutar_AudioMaster.bat
+   👉 ejecutar_PureTrack.bat
 
 OPCIÓN B:
    Entra en la carpeta generada:
-   👉 dist\AudioMaster\AudioMaster.exe
+   👉 dist\PureTrack\PureTrack.exe
    (Puedes crear un acceso directo en tu Escritorio a este archivo .exe).
 
 --------------------------------------------------------------------------------
@@ -45,5 +46,5 @@ BINARIOS PORTABLES DE AUDIO (FFmpeg, FFprobe, fpcalc):
 --------------------------------------------------------------------------------
 Los binarios de procesamiento de audio de alta velocidad (ffmpeg.exe, ffprobe.exe
 y fpcalc.exe) ya vienen pre-incluidos en la carpeta "bin\" de este paquete, por
-lo que NO necesitas descargar nada adicional para auditar o masterizar pistas.
+lo que NO necesitas descargar nada adicional para auditar o sanitizar pistas.
 ================================================================================

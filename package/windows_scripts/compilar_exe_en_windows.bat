@@ -1,14 +1,14 @@
 @echo off
 :: =====================================================================
 :: compilar_exe_en_windows.bat
-:: Compila de forma nativa AudioMaster.exe portable con PyInstaller en Windows
+:: Compila de forma nativa PureTrack.exe portable con PyInstaller en Windows
 :: =====================================================================
 chcp 65001 >nul
-title Compilador AudioMaster para Windows
+title Compilador PureTrack para Windows
 color 0A
 
 echo ======================================================================
-echo           COMPILADOR DE AUDIOMASTER PARA WINDOWS
+echo           COMPILADOR DE PURETRACK PARA WINDOWS
 echo ======================================================================
 echo.
 echo 1. Comprobando instalacion de Python...
@@ -29,25 +29,25 @@ if %errorlevel% neq 0 (
 
 echo [+] Python detectado.
 echo.
-echo 2. Instalando PyInstaller y dependencias de AudioMaster...
+echo 2. Instalando PyInstaller y dependencias de PureTrack...
 %PY_CMD% -m pip install --upgrade pip
 %PY_CMD% -m pip install -r requirements.txt
 %PY_CMD% -m pip install pyinstaller
 
 echo.
-echo 3. Compilando AudioMaster.exe...
+echo 3. Compilando PureTrack.exe con icono y recursos i18n...
 %PY_CMD% package/build_release.py --mode onedir
 
 echo.
 echo ======================================================================
 echo  [+] COMPILACION FINALIZADA CON EXITO.
 echo      El ejecutable autonomo se encuentra en:
-echo      dist\AudioMaster\AudioMaster.exe
+echo      dist\PureTrack\PureTrack.exe
 echo ======================================================================
 echo.
-set /p ABRIR="Desea iniciar AudioMaster ahora? (S/N): "
+set /p ABRIR="Desea iniciar PureTrack ahora? (S/N): "
 if /i "%ABRIR%"=="S" (
-    echo Iniciando AudioMaster...
-    start "" "dist\AudioMaster\AudioMaster.exe"
+    echo Iniciando PureTrack...
+    start "" "dist\PureTrack\PureTrack.exe"
 )
 exit /b 0

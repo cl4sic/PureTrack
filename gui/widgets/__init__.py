@@ -1,1 +1,1 @@
-"""Custom reusable PySide6 widgets for AudioMaster."""
+"""Custom reusable PySide6 widgets for PureTrack."""

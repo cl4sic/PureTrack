@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-package/package_windows_zip.py - Empaquetador Autónomo de AudioMaster para Windows.
+package/package_windows_zip.py - Empaquetador Autónomo de PureTrack para Windows.
 
 Garantiza:
-1. Copia de todos los componentes esenciales y binarios Windows (ffmpeg.exe, ffprobe.exe, fpcalc.exe).
-2. Conversión forzada y estricta a finales de línea DOS/Windows (CRLF - \\r\\n) en todos los archivos
+1. Copia de todos los componentes esenciales, recursos multi-idioma (locales/) e icono (gui/assets/).
+2. Inclusión de binarios Windows de alta velocidad (ffmpeg.exe, ffprobe.exe, fpcalc.exe).
+3. Conversión forzada y estricta a finales de línea DOS/Windows (CRLF - \\r\\n) en todos los archivos
    .bat, .cmd, .txt, .md y .json para evitar errores de sintaxis en cmd.exe de Windows.
-3. Verificación de integridad binaria antes de comprimir.
-4. Generación atómica del archivo ZIP final (AudioMaster_Windows.zip).
+4. Verificación de integridad binaria antes de comprimir.
+5. Generación atómica del archivo ZIP final (PureTrack_Windows.zip).
 """
 
 import sys
@@ -18,8 +19,8 @@ from pathlib import Path
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-DIST_WIN_DIR = ROOT_DIR / "AudioMaster_Windows"
-ZIP_OUTPUT = ROOT_DIR / "AudioMaster_Windows.zip"
+DIST_WIN_DIR = ROOT_DIR / "PureTrack_Windows"
+ZIP_OUTPUT = ROOT_DIR / "PureTrack_Windows.zip"
 
 EXTENSIONS_TO_CRLF = {".bat", ".cmd", ".ps1", ".txt", ".md", ".json", ".py", ".qss"}
 
@@ -57,7 +58,7 @@ def verify_crlf(file_path: Path) -> bool:
 
 def prepare_and_zip():
     print("=" * 75)
-    print(">>> PREPARACIÓN Y EMPAQUETADO WINDOWS CON FINAL DE LÍNEA CRLF ESTRICTO")
+    print(">>> PURETRACK: PREPARACIÓN Y EMPAQUETADO WINDOWS CON CRLF ESTRICTO")
     print("=" * 75)
 
     DIST_WIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -83,7 +84,7 @@ def prepare_and_zip():
         (ROOT_DIR / "MANUAL_USUARIO.md", DIST_WIN_DIR / "MANUAL_USUARIO.md"),
         (ROOT_DIR / "README.md", DIST_WIN_DIR / "README.md"),
         (ROOT_DIR / "README_ES.md", DIST_WIN_DIR / "README_ES.md"),
-        (win_scripts_dir / "ejecutar_AudioMaster.bat", DIST_WIN_DIR / "ejecutar_AudioMaster.bat"),
+        (win_scripts_dir / "ejecutar_PureTrack.bat", DIST_WIN_DIR / "ejecutar_PureTrack.bat"),
         (win_scripts_dir / "compilar_exe_en_windows.bat", DIST_WIN_DIR / "compilar_exe_en_windows.bat"),
         (win_scripts_dir / "INSTRUCCIONES_WINDOWS.txt", DIST_WIN_DIR / "INSTRUCCIONES_WINDOWS.txt"),
     ]
@@ -92,8 +93,8 @@ def prepare_and_zip():
         if src.exists():
             shutil.copy2(src, dst)
 
-    # Copiar carpetas core, gui y package
-    for folder in ["core", "gui", "package"]:
+    # Copiar carpetas core, gui, package y locales
+    for folder in ["core", "gui", "package", "locales"]:
         src_f = ROOT_DIR / folder
         dst_f = DIST_WIN_DIR / folder
         if src_f.exists():

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-app.py - Punto de Entrada Principal para la Suite Desktop AudioMaster.
+app.py - Punto de Entrada Principal para la Suite Desktop PureTrack.
 
 Inicializa:
 - QApplication con soporte High-DPI y codificación UTF-8.
 - Gestor centralizado de configuración (ConfigManager).
+- Motor de internacionalización y detección de idioma (TranslationManager).
 - Tema AIMP Dark (Ámbar / Cian).
+- Icono profesional multiplataforma (gui/assets/icon.png e icon.ico).
 - Ventana principal reactiva (MainWindow).
 """
 
@@ -23,34 +25,39 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 
 from core.config_manager import ConfigManager
+from core.i18n import get_i18n
 from gui.main_window import MainWindow
 from gui.styles.theme_loader import load_stylesheet
 
 
-def resolve_app_icon(icon_style: str = "b_cyberwave") -> QIcon:
-    """Resuelve la ruta del icono de la aplicación según el estilo seleccionado."""
-    style_map = {
-        "a_disc": "icon_concept_a_disc",
-        "b_cyberwave": "icon_concept_b_cyberwave",
-        "c_shield": "icon_concept_c_shield",
-    }
-    base_name = style_map.get(icon_style, "icon_concept_b_cyberwave")
-    icons_dir = APP_ROOT / "gui" / "icons"
+def resolve_puretrack_icon() -> QIcon:
+    """Resuelve la ruta del icono de PureTrack tanto en desarrollo como dentro de PyInstaller."""
+    candidates_dir = []
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        meipass = Path(sys._MEIPASS)
+        candidates_dir.append(meipass / "gui" / "assets")
+        candidates_dir.append(meipass / "assets")
+        candidates_dir.append(meipass)
 
-    # En Windows preferir .ico si existe para soporte multirresolución en la barra de tareas
-    if sys.platform.startswith("win"):
-        ico_file = icons_dir / f"{base_name}.ico"
-        if ico_file.exists():
-            return QIcon(str(ico_file))
+    candidates_dir.append(APP_ROOT / "gui" / "assets")
+    candidates_dir.append(APP_ROOT / "assets")
 
-    png_file = icons_dir / f"{base_name}.png"
-    if png_file.exists():
-        return QIcon(str(png_file))
+    for ad in candidates_dir:
+        if sys.platform.startswith("win"):
+            ico_path = ad / "icon.ico"
+            if ico_path.exists():
+                return QIcon(str(ico_path))
+        png_path = ad / "icon.png"
+        if png_path.exists():
+            return QIcon(str(png_path))
+        ico_path = ad / "icon.ico"
+        if ico_path.exists():
+            return QIcon(str(ico_path))
 
-    # Fallback genérico
-    fallback = icons_dir / "app_icon.png"
-    if fallback.exists():
-        return QIcon(str(fallback))
+    # Fallback si no se localiza en assets
+    fallback_png = APP_ROOT / "gui" / "icons" / "app_icon.png"
+    if fallback_png.exists():
+        return QIcon(str(fallback_png))
 
     return QIcon()
 
@@ -60,7 +67,7 @@ def main():
     if sys.platform.startswith("win"):
         try:
             import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("AudioMasterLab.AudioMaster.Suite.2.0")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PureTrackLab.PureTrack.Suite.2.0")
         except Exception:
             pass
 
@@ -68,21 +75,24 @@ def main():
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
     app = QApplication(sys.argv)
-    app.setApplicationName("AudioMaster")
-    app.setApplicationDisplayName("AudioMaster Suite")
-    app.setOrganizationName("AudioMasterLab")
-    app.setOrganizationDomain("audiomaster.local")
+    app.setApplicationName("PureTrack")
+    app.setApplicationDisplayName("PureTrack")
+    app.setOrganizationName("PureTrackLab")
+    app.setOrganizationDomain("puretrack.local")
 
     # Cargar gestor de configuración persistente
     config_mgr = ConfigManager()
+
+    # Inicializar motor de internacionalización i18n
+    i18n = get_i18n()
+    i18n.init_with_config(config_mgr)
 
     # Cargar y aplicar tema AIMP Dark
     theme = config_mgr.get("ui_preferences", "accent_theme", "amber")
     app.setStyleSheet(load_stylesheet(theme))
 
     # Configurar icono oficial para ventana y barra de tareas
-    icon_style = config_mgr.get("ui_preferences", "icon_style", "b_cyberwave")
-    app_icon = resolve_app_icon(icon_style)
+    app_icon = resolve_puretrack_icon()
     if not app_icon.isNull():
         app.setWindowIcon(app_icon)
 

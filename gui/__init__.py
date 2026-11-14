@@ -1,1 +1,1 @@
-"""PySide6 GUI module for AudioMaster desktop suite."""
+"""PySide6 GUI module for PureTrack desktop suite."""

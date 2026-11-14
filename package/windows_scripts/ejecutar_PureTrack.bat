@@ -1,18 +1,18 @@
 @echo off
 :: =====================================================================
-:: ejecutar_AudioMaster.bat
-:: Lanzador directo de 1 clic para AudioMaster.exe en Windows
+:: ejecutar_PureTrack.bat
+:: Lanzador directo de 1 clic para PureTrack.exe en Windows
 :: =====================================================================
 chcp 65001 >nul
-title AudioMaster Suite
+title PureTrack Suite
 
-if exist "dist\AudioMaster\AudioMaster.exe" (
-    start "" "dist\AudioMaster\AudioMaster.exe"
+if exist "dist\PureTrack\PureTrack.exe" (
+    start "" "dist\PureTrack\PureTrack.exe"
     exit /b 0
 )
 
 echo ======================================================================
-echo           AUDIOMASTER SUITE - EJECUTABLE NO ENCONTRADO
+echo           PURETRACK SUITE - EJECUTABLE NO ENCONTRADO
 echo ======================================================================
 echo.
 echo  El ejecutable autonomo aun no ha sido compilado.

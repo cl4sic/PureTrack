@@ -219,6 +219,8 @@ class TestMainWindowTableAndInteractions(unittest.TestCase):
     def setUp(self):
         from core.config_manager import ConfigManager
         from gui.main_window import MainWindow
+        from core.i18n import get_i18n
+        get_i18n().set_language("es", save_to_config=False)
         self.cfg = ConfigManager()
         self.win = MainWindow(self.cfg)
 
@@ -381,6 +383,85 @@ class TestMainWindowTableAndInteractions(unittest.TestCase):
         # Verificar que se sanearon los caracteres prohibidos (<>:) y se aseguró .mp3
         self.assertEqual(data.get("custom_filename"), "Renamed Clean Track - Final.mp3")
         self.assertEqual(self.win.table.item(0, self.win.COL_PROJECTED).text(), "Renamed Clean Track - Final.mp3")
+
+
+class TestPureTrackI18n(unittest.TestCase):
+    """Pruebas del motor de internacionalización y multi-idioma (i18n)."""
+
+    def setUp(self):
+        from core.i18n import get_i18n
+        self.i18n = get_i18n()
+
+    def test_translation_dictionaries_loaded(self):
+        self.assertIn("es", self.i18n._translations)
+        self.assertIn("en", self.i18n._translations)
+        self.assertGreater(len(self.i18n._translations["es"]), 5)
+        self.assertGreater(len(self.i18n._translations["en"]), 5)
+
+    def test_hot_switching_and_signal(self):
+        received_langs = []
+        self.i18n.sig_language_changed.connect(lambda lang: received_langs.append(lang))
+
+        self.i18n.set_language("en", save_to_config=False)
+        self.assertEqual(self.i18n.get_language(), "en")
+        self.assertEqual(self.i18n.t("top_bar.browse_btn"), "Browse...")
+        self.assertEqual(self.i18n.t("buttons.audit"), "Audit Library")
+        self.assertEqual(self.i18n.get_badge_text("APTA"), "OK")
+        self.assertEqual(self.i18n.get_badge_text("ALERTA"), "WARNING")
+        self.assertEqual(self.i18n.get_badge_text("EXCLUIDA"), "EXCLUDED")
+        self.assertEqual(self.i18n.get_badge_text("APLICADO"), "APPLIED")
+
+        self.i18n.set_language("es", save_to_config=False)
+        self.assertEqual(self.i18n.get_language(), "es")
+        self.assertEqual(self.i18n.t("top_bar.browse_btn"), "Examinar...")
+        self.assertEqual(self.i18n.t("buttons.audit"), "Auditar Biblioteca")
+        self.assertEqual(self.i18n.get_badge_text("APTA"), "APTA")
+        self.assertEqual(self.i18n.get_badge_text("ALERTA"), "ALERTA")
+        self.assertEqual(self.i18n.get_badge_text("EXCLUIDA"), "EXCLUIDA")
+        self.assertEqual(self.i18n.get_badge_text("APLICADO"), "APLICADO")
+
+        self.assertIn("en", received_langs)
+        self.assertIn("es", received_langs)
+
+    def test_fallback_and_formatting(self):
+        self.i18n.set_language("en", save_to_config=False)
+        formatted = self.i18n.t("progress.eta", eta="45", speed="2.5")
+        self.assertIn("45", formatted)
+        self.assertIn("2.5", formatted)
+
+        # Clave inexistente devuelve fallback por defecto o la propia clave
+        missing = self.i18n.t("non_existent_key", default="Fallback Default")
+        self.assertEqual(missing, "Fallback Default")
+
+
+class TestPureTrackIcon(unittest.TestCase):
+    """Pruebas de presencia e integridad de los iconos multiplataforma."""
+
+    def test_icon_assets_exist_and_valid(self):
+        from pathlib import Path
+        from PySide6.QtGui import QIcon, QImage
+
+        assets_dir = Path(__file__).resolve().parent / "gui" / "assets"
+        png_path = assets_dir / "icon.png"
+        ico_path = assets_dir / "icon.ico"
+
+        self.assertTrue(png_path.exists(), "icon.png no existe en gui/assets/")
+        self.assertTrue(ico_path.exists(), "icon.ico no existe en gui/assets/")
+        self.assertGreater(png_path.stat().st_size, 5000, "icon.png es demasiado pequeño o está corrupto")
+        self.assertGreater(ico_path.stat().st_size, 5000, "icon.ico es demasiado pequeño o está corrupto")
+
+        # Verificar carga en QImage y dimensiones
+        img = QImage(str(png_path))
+        self.assertFalse(img.isNull(), "QImage no pudo cargar icon.png")
+        self.assertEqual(img.width(), 1024)
+        self.assertEqual(img.height(), 1024)
+
+        # Verificar carga en QIcon
+        ico = QIcon(str(ico_path))
+        self.assertFalse(ico.isNull(), "QIcon no pudo cargar icon.ico")
+        sizes = [s.width() for s in ico.availableSizes()]
+        for expected_size in [16, 32, 48, 64, 128, 256]:
+            self.assertIn(expected_size, sizes, f"icon.ico no contiene la resolución requerida {expected_size}x{expected_size}")
 
 
 if __name__ == "__main__":

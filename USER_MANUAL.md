@@ -1,13 +1,13 @@
-# AudioMaster Suite - User Manual
+# PureTrack Suite - User Manual
 
-**AudioMaster** is an advanced, professional desktop audio engineering and metadata normalization suite built with Python, PySide6 (Qt 6), and modern C/Audio analysis engines (FFmpeg, Mutagen, Chromaprint, SoundFile, NumPy). Designed with an AIMP-inspired high-contrast dark aesthetic, it empowers DJs, audio curators, music producers, and audiophiles to audit, repair, enrich, and safely organize their music libraries across Windows and Linux.
+**PureTrack** is an advanced, professional desktop audio engineering and metadata normalization suite built with Python, PySide6 (Qt 6), and modern C/Audio analysis engines (FFmpeg, Mutagen, Chromaprint, SoundFile, NumPy). Designed with an AIMP-inspired high-contrast dark aesthetic, native internationalization (i18n), and a custom acoustic vector icon, it empowers DJs, audio curators, music producers, and audiophiles to audit, repair, enrich, and safely organize their music libraries across Windows and Linux.
 
 ---
 
 ## Table of Contents
 1. [Overview & Key Features](#1-overview--key-features)
 2. [User Interface Guide](#2-user-interface-guide)
-   - [Top Bar & Drag-and-Drop](#top-bar--drag-and-drop)
+   - [Top Bar: Language Selector, Drag-and-Drop & Theme](#top-bar-language-selector-drag-and-drop--theme)
    - [Tracks Table (Left Panel)](#tracks-table-left-panel)
    - [Inspector Panel (Right Panel)](#inspector-panel-right-panel)
    - [Pattern Builder & Dynamic Tokens](#pattern-builder--dynamic-tokens)
@@ -17,9 +17,10 @@
    - [Phase 2: Metadata Resolution & Live Projection](#phase-2-metadata-resolution--live-projection)
    - [Phase 3: Safe Disk Execution & Dry-Run](#phase-3-safe-disk-execution--dry-run)
    - [Phase 4: Instant 100% Reversible Rollback](#phase-4-instant-100-reversible-rollback)
-4. [Customization & Presets](#4-customization--presets)
-5. [Windows & Linux Distribution](#5-windows--linux-distribution)
-6. [Troubleshooting & FAQ](#6-troubleshooting--faq)
+4. [Multi-Language System (i18n) & Visual Identity](#4-multi-language-system-i18n--visual-identity)
+5. [Customization & Presets](#5-customization--presets)
+6. [Windows & Linux Distribution](#6-windows--linux-distribution)
+7. [Troubleshooting & FAQ](#7-troubleshooting--faq)
 
 ---
 
@@ -33,27 +34,30 @@
   - Dynamic range and total RMS calculations.
   - Abrupt ending detection (analyzing energy in the final 400 ms and 100 ms to detect tracks that cut off without a fade-out).
   - In-track anomalous silence detection (using FFmpeg's `silencedetect` while ignoring natural intro/outro silences).
-- **Interactive Pattern Builder:** Dynamic string interpolation with real-time preview on a sample track while typing.
+- **Interactive Pattern Builder & Presets:** Dynamic string interpolation with real-time preview on a sample track while typing, plus a full preset manager to create, save, and delete user presets.
 - **Strict Windows NTFS Sanitation:** Replaces forbidden characters (`\ / : * ? " < > |`), handles DOS device names (`CON`, `PRN`, `AUX`, `NUL`), prevents trailing dots/spaces (`WinError 123`), and supports extended-length paths (`\\?\`).
+- **Hidden Windows Subprocesses:** Full suppression of CMD black console popups on Windows (`CREATE_NO_WINDOW` and hidden window flags) across all FFmpeg, FFprobe, and fpcalc calls.
 - **Transactional Safety:** Generates a structured JSON log (`rename_log.json`) *before* touching files, ensuring 100% reversible rollbacks.
 
 ---
 
 ## 2. User Interface Guide
 
-### Top Bar & Drag-and-Drop
+### Top Bar: Language Selector, Drag-and-Drop & Theme
 - **Source Directory Input:** Shows the active music folder. You can type an absolute path or click **Examinar...** to browse your filesystem.
-- **Drag-and-Drop Support:** Drag any folder or selection of `.mp3` files directly into the window from your file manager (Dolphin, Nautilus, COSMIC Files, Windows Explorer). AudioMaster automatically parses and populates the table.
+- **Drag-and-Drop Support:** Drag any folder or selection of `.mp3` files directly into the window from your file manager (Windows Explorer, Dolphin, Nautilus).
+- **Language Selector (i18n):** Compact dropdown (`Auto (System)`, `Español`, `English`) that hot-switches the application language across all tables, headers, badges, and menus without restarting.
 - **Recargar (Reload):** Refreshes the track list from the current folder.
 - **Tema (Theme Toggle):** Instantly switches the UI accent color between **Amber** (`#ff9800`) and **Cyan** (`#00b4d8`).
 
 ### Tracks Table (Left Panel)
-- **Estado (Quality Badge):**
-  - <span style="color:#81c784;">● APTA (Green):</span> Clean, uncorrupted, optimal bitrate and dynamic range.
-  - <span style="color:#ffd54f;">▲ REVISAR (Yellow):</span> Minor warning (e.g., lower bitrate, abrupt ending, or in-track silence).
-  - <span style="color:#e57373;">✖ ELIMINAR (Red):</span> Corrupt audio stream, incomplete duration, or severe clipping.
-  - <span style="color:#b0bec5;">○ PENDIENTE (Gray):</span> Track loaded, awaiting analysis.
-  - <span style="color:#90e0ef;">✔ APLICADO (Cyan):</span> Tags written and filename safely updated on disk.
+- **Status (Quality Badge):**
+  - <span style="color:#81c784;">● APTA / OK (Green):</span> Clean, uncorrupted, optimal bitrate and dynamic range.
+  - <span style="color:#ffd54f;">▲ ALERTA / WARNING (Yellow):</span> Minor warning (e.g., lower bitrate, abrupt ending, or in-track silence).
+  - <span style="color:#e57373;">✖ ERROR (Red):</span> Corrupt audio stream, incomplete duration, or severe clipping.
+  - <span style="color:#888888;">⊘ EXCLUIDA / EXCLUDED (Dark Gray):</span> Track excluded by the user from batch processing.
+  - <span style="color:#b0bec5;">○ PENDIENTE / PENDING (Gray):</span> Track loaded, awaiting analysis.
+  - <span style="color:#90e0ef;">✔ APLICADO / APPLIED (Cyan):</span> Tags written and filename safely updated on disk.
 - **Columns:**
   - `Original Filename`
   - `Projected Filename` (dynamic preview according to active pattern)
@@ -63,17 +67,18 @@
   - `Action / Verdict` (human-readable diagnostic reason)
 - **Right-Click Context Menu:**
   - *Inspeccionar detalles técnicos:* Opens a modal with comprehensive waveform stats, FFmpeg status, and ID3 tags.
-  - *Editar manualmente nombre proyectado:* Override the projected filename for a specific track.
-  - *Excluir del lote / Re-incluir:* Temporarily ignore individual tracks during batch operations.
+  - *Asignar nombre personalizado:* Override the projected filename for a specific track with smart prefill and disk persistence.
+  - *Excluir del lote / Incluir en el lote:* Bidirectional toggle to selectively omit tracks from processing.
+  - *Restablecer a patrón automático:* Reverts any manual name override back to the dynamic pattern.
 
 ### Inspector Panel (Right Panel)
 Can be collapsed or expanded anytime via the **Ocultar Ajustes ▶** / **Mostrar Ajustes ◀** button.
 - **Audit Criteria & Thresholds:**
-  - Checkbox: *Detectar Clipping / Saturación digital (> 0 dBFS)*
-  - Checkbox: *Detectar Silencios anómalos (> 3.0s en cuerpo)*
-  - Checkbox: *Detectar Corte Abrupto final (sin fade-out)*
-  - Slider: *Bitrate mínimo aceptable* (Range: 128 to 320 kbps)
-  - Slider: *Duración mínima de pista* (Range: 10 to 120 seconds)
+  - Checkbox: *Clipping / Digital Saturation (> 0 dBFS)*
+  - Checkbox: *Anomalous Silences (> 3.0s in body)*
+  - Checkbox: *Abrupt Endings (without fade-out)*
+  - Slider: *Minimum Acceptable Bitrate* (Range: 128 to 320 kbps)
+  - Slider: *Minimum Track Duration* (Range: 10 to 120 seconds)
 - **ID3v2 Tag Mapping:** Configure which dynamic token populates each tag:
   - `TIT2` (Title): `{title}{remix}`
   - `TPE1` (Lead / Contributing Artists): `{all_artists}`
@@ -96,14 +101,13 @@ Click any token button to insert it at your cursor's position:
 | `{genre}` | Primary musical genre | `Future Bounce` |
 | `{all_artists}` | Comma-separated full lineup | `Martin Garrix, DallasK, Sasha Alex Sloan` |
 
-- **Presets:** Quick selector containing standard industry presets:
-  - *Estándar EDM / Pop:* `{artist}{feat} - {title}{remix}`
-  - *Estricto Artista - Título:* `{artist} - {title}`
-  - *Álbum y Año:* `{year} - {album} - {artist} - {title}{remix}`
-  - *DJ Extended / Remix:* `{artist}{feat} - {title} ({remix})`
+- **Presets Manager:**
+  - `+ Nuevo` button: Save current pattern as a new named preset.
+  - `Guardar` button: Update the currently active preset with new changes.
+  - `Borrar` button: Delete the selected preset.
 
 ### Telemetry & Dual Progress Bar (Bottom Panel)
-- **Track Progress Bar:** Shows the individual processing stage of the current song (FFmpeg decode $\rightarrow$ Stream analysis $\rightarrow$ Waveform & clipping $\rightarrow$ Complete).
+- **Track Progress Bar:** Shows the individual processing stage of the current song.
 - **Global Batch Progress Bar:** Shows overall queue completion percentage, items completed, items remaining, processing speed (files per second), and estimated time to arrival (**ETA**).
 - **Execution Flow Controls:**
   - **Pausar / Reanudar:** Safely halts the worker thread without crashing or leaving half-written files.
@@ -117,97 +121,82 @@ Click any token button to insert it at your cursor's position:
 ### Phase 1: Technical Acoustic Audit
 1. Load tracks via Drag & Drop or the **Examinar...** button.
 2. Click **Auditar Biblioteca**.
-3. AudioMaster analyzes every track in the background:
-   - Verifies MP3 stream headers with FFmpeg.
-   - Measures digital clipping and dynamic range.
-   - Scans for ungraceful cuts and silences.
+3. PureTrack analyzes every track in the background without console popup windows.
 4. Each row updates its badge immediately upon completion.
 
 ### Phase 2: Metadata Resolution & Live Projection
 1. Adjust your desired naming pattern in the **Pattern Builder**.
 2. Click **Simular (Dry-Run)**.
-3. AudioMaster queries the local persistent SQLite cache (`output/metadata_cache.db`), matches canonical catalogs, calculates Chromaprint fingerprints, and populates the **Nombre Proyectado** column.
+3. PureTrack queries the local persistent SQLite cache (`output/metadata_cache.db`), matches canonical catalogs, calculates Chromaprint fingerprints, and populates the **Nombre Proyectado** column.
 4. Review the projected names before committing any changes.
 
 ### Phase 3: Safe Disk Execution
 1. Click **Aplicar en Disco**.
 2. A confirmation prompt displays the total number of files to modify.
-3. AudioMaster:
+3. PureTrack:
    - Writes the transaction manifest to `output/rename_log.json`.
    - Writes normalized ID3v2.3 tags with UTF-8 encoding (preserving embedded artwork).
-   - Safely renames the files on disk using Windows NTFS sanitization and extended-length path compatibility.
+   - Safely renames the files on disk using Windows NTFS sanitization, respecting custom name overrides.
    - Validates post-write integrity with FFmpeg.
 
 ### Phase 4: Instant 100% Reversible Rollback
 If you ever want to revert all changes:
 1. Click **Deshacer (Rollback)**.
 2. Confirm the prompt.
-3. AudioMaster reads `output/rename_log.json` and restores all original filenames and ID3 tags.
+3. PureTrack reads `output/rename_log.json` and restores all original filenames and ID3 tags.
 
 ---
 
-## 4. Customization & Presets
+## 4. Multi-Language System (i18n) & Visual Identity
+
+- **Automatic Language Detection:** When set to `Auto`, PureTrack detects your operating system language via `QLocale`. Spanish systems automatically start in Spanish, while all other systems start in English.
+- **Hot Language Switching:** You can change language on the fly (`Auto`, `Español`, `English`) from the top bar dropdown at any time. The entire UI updates immediately without needing to restart.
+- **Cross-Platform Vector Icon:** PureTrack features a custom acoustic pulse and equalizer icon (`gui/assets/icon.png` and `gui/assets/icon.ico`) embedded into the binary and pinned to the Windows taskbar (`AppUserModelID`).
+
+---
+
+## 5. Customization & Presets
 Configuration is saved automatically to `config.json` in UTF-8 format:
-- On Linux: `~/.config/AudioMaster/config.json` (with local portable fallback).
-- On Windows: `%APPDATA%\AudioMaster\config.json` (or `./config.json` next to the executable).
+- On Linux: `~/.config/PureTrack/config.json` (with local portable fallback).
+- On Windows: `%APPDATA%\PureTrack\config.json` (or `./config.json` next to the executable).
 
 ---
 
-## 5. Windows & Linux Distribution
+## 6. Windows & Linux Distribution
 
 ### Running on Linux
 ```bash
 # 1. Activate environment
 source .venv/bin/activate
 
-# 2. Run AudioMaster GUI
+# 2. Run PureTrack GUI
 python app.py
 ```
 
 ### Building Standalone Linux Binary
 ```bash
 python package/build_release.py --mode onedir
-# Binary generated in: dist/AudioMaster/AudioMaster
+# Binary generated in: dist/PureTrack/PureTrack
 ```
 
 ### Running on Windows
-1. Download and extract `AudioMaster_Windows.zip`.
+1. Download and extract `PureTrack_Windows.zip`.
 2. Double-click **`compilar_exe_en_windows.bat`**:
    - Installs dependencies and PyInstaller in 1 click.
-   - Generates the standalone executable in `dist\AudioMaster\AudioMaster.exe`.
-   - Asks if you want to open AudioMaster immediately (type `S` or `Y`).
+   - Generates the standalone executable in `dist\PureTrack\PureTrack.exe`.
+   - Asks if you want to open PureTrack immediately.
 3. For daily execution, double-click:
-   - **`ejecutar_AudioMaster.bat`** (or open `dist\AudioMaster\AudioMaster.exe` directly).
-
----
-
-## 6. Advanced Interface Features
-
-### Interactive Resizable Columns
-- All table columns can be freely resized: click and drag any header divider to adjust widths for long titles or original filenames.
-- **Auto-fit:** Double-click any header divider to instantly fit that column to the longest text content.
-- **Horizontal Scrolling:** Smooth horizontal scrolling allows expanding columns without squishing information.
-
-### Custom Presets Manager (Create, Save & Delete)
-- **Create New Preset (`+ Nuevo`):** Assemble your pattern tokens and click `+ Nuevo`. Enter a custom preset name to save it permanently into `config.json`.
-- **Save Changes (`Guardar`):** Modify the current pattern and click `Guardar` to update that preset.
-- **Delete Preset (`Borrar`):** Delete obsolete presets (at least one preset is always safely preserved).
-
-### Custom Song Name Overrides (Disk Protection)
-- **Quick In-Place Editing:** Double-click directly on the **"Nombre Proyectado" (Projected Name)** cell for any track (or right-click -> *✏️ Asignar nombre personalizado...*).
-- **Overwrite Protection:** Custom filenames are highlighted in **amber** and locked. Changing inspector patterns or running automatic audits will NOT overwrite your custom names.
-- **Applying to Disk:** When clicking **[Aplicar en Disco]**, tracks with custom names are renamed on disk to the exact filename you chose.
-- **Revert:** Right-click the track and select *🔄 Restablecer a patrón automático* if you wish to return to the automatic template.
+   - **`ejecutar_PureTrack.bat`** (or open `dist\PureTrack\PureTrack.exe` directly).
 
 ---
 
 ## 7. Troubleshooting & FAQ
 
-**Q: Why were some icons showing up as empty squares (`▯`) on Linux?**  
-A: Certain Linux desktop environments (such as COSMIC DE or minimal window managers without `noto-fonts-emoji`) do not map Unicode emoji glyphs by default. AudioMaster uses clean Qt standard vector icons and universal typography to guarantee crisp rendering on all platforms.
+**Q: Why don't black CMD console windows appear when auditing tracks on Windows?**  
+A: PureTrack suppresses subprocess windows via `CREATE_NO_WINDOW` and hidden startup flags on all calls to FFmpeg, FFprobe, and fpcalc.
 
-**Q: Does AudioMaster re-encode or compress my audio?**  
-A: **No.** AudioMaster performs lossless metadata tagging and filesystem renaming. The audio stream itself is never recompressed or degraded.
+**Q: Does PureTrack re-encode or compress my audio?**  
+A: **No.** PureTrack performs lossless metadata tagging and filesystem renaming. The audio stream itself is never recompressed or degraded.
 
 **Q: Are existing album covers preserved?**  
-A: **Yes.** AudioMaster specifically preserves all existing `APIC` (Attached Picture) frames when updating ID3v2 tags.
+A: **Yes.** PureTrack specifically preserves all existing `APIC` (Attached Picture) frames when updating ID3v2 tags.

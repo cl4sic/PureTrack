@@ -29,6 +29,7 @@
     "min_duration_sec": 60.0
   },
   "ui_preferences": {
+    "language": "auto",
     "accent_theme": "amber",
     "last_source_dir": "/home/cl4sic/Documents/Music",
     "last_target_dir": "",
