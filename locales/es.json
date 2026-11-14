@@ -52,9 +52,8 @@
   },
   "buttons": {
     "audit": "Auditar Biblioteca",
-    "dry_run": "Simular (Dry-Run)",
     "apply": "Aplicar en Disco",
-    "rollback": "Rollback",
+    "rollback": "Deshacer (Rollback)",
     "pause": "Pausar",
     "resume": "Reanudar",
     "cancel": "Cancelar",
@@ -66,11 +65,20 @@
     "close": "Cerrar"
   },
   "progress": {
-    "overall": "Progreso Global:",
-    "current_item": "Pista Actual:",
+    "overall": "Progreso del lote:",
+    "current_item": "Pista actual:",
+    "current_step": "Paso actual:",
+    "processing": "Procesando [{count}/{total}]",
     "console_title": "Consola de Diagnóstico y Telemetría en Tiempo Real",
     "eta": "Tiempo restante: {eta}s | Velocidad: {speed} pistas/s",
-    "ready": "Listo para procesar"
+    "ready": "Listo para procesar",
+    "step_ffmpeg": "Decodificación e Integridad FFmpeg",
+    "step_bitrate": "Extracción de Bitrate y Streams",
+    "step_spectrum": "Análisis de Espectro, Clipping y Silencios",
+    "step_done": "Diagnóstico finalizado",
+    "step_tagging": "Actualizando etiquetas ID3v2...",
+    "step_renaming": "Renombrando en disco...",
+    "step_restoring": "Restaurando nombres y etiquetas originales..."
   },
   "inspector": {
     "title": "Inspector de Metadatos y Calidad",
@@ -105,7 +113,6 @@
     "confirm_rollback_msg": "¿Desea restaurar los nombres de archivo y etiquetas originales a partir del último registro?\n\nEsta operación revertirá los cambios aplicados.",
     "no_tracks_title": "Sin pistas",
     "no_tracks_msg": "No hay archivos MP3 disponibles para auditar.",
-    "no_dry_run_tracks": "No hay archivos para simular.",
     "no_apply_tracks": "No hay operaciones válidas para aplicar.",
     "process_finished": "Proceso Finalizado",
     "rollback_success": "Rollback Exitoso",

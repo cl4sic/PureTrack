@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-package/build_release.py - Generador Profesional de Builds y Distribución Multiplataforma.
+package/build_release.py - Generador Autónomo de Ejecutable Único (--onefile) para PureTrack.
 
 Soporta:
-- Windows: Ejecutable .exe portable (onefile o onedir) empaquetando binarios locales (bin/ffmpeg.exe, etc.).
-- Linux: Binario ELF standalone (onefile o onedir) integrando PySide6, mutagen, numpy, soundfile.
+- Windows: Ejecutable único autónomo PureTrack.exe / PureTrack-Windows-x64.exe (--onefile, --windowed, --icon).
+  Incrusta ffmpeg.exe, ffprobe.exe y fpcalc.exe con --add-binary para extracción automática en sys._MEIPASS.
+- Linux: Binario standalone PureTrack / PureTrack-Linux-x64 (--onefile, --windowed).
 """
 
 import sys
@@ -32,9 +33,9 @@ def check_pyinstaller() -> bool:
     return False
 
 
-def build_release(mode: str = "onedir", windowed: bool = True):
+def build_release(name: str = "PureTrack", mode: str = "onefile", windowed: bool = True):
     print("=" * 75)
-    print(">>> PURETRACK - PROCESO DE COMPILACIÓN Y EMPAQUETADO MULTIPLATAFORMA")
+    print(">>> PURETRACK - COMPILACIÓN DE EJECUTABLE ÚNICO AUTÓNOMO")
     print("=" * 75)
 
     if not check_pyinstaller():
@@ -44,7 +45,7 @@ def build_release(mode: str = "onedir", windowed: bool = True):
 
     is_windows = sys.platform.startswith("win")
     sep = ";" if is_windows else ":"
-    target_name = "PureTrack"
+    target_name = name
 
     # Preparar parámetros de PyInstaller optimizados
     cmd = [
@@ -90,15 +91,18 @@ def build_release(mode: str = "onedir", windowed: bool = True):
         "--add-data", f"{ROOT_DIR / 'locales'}{sep}locales",
     ])
 
-    # Si existe carpeta bin, incluirla en el paquete
+    # Si existen binarios en bin/, incrustarlos usando --add-binary para que queden disponibles en sys._MEIPASS
     bin_folder = ROOT_DIR / "bin"
     if bin_folder.exists():
-        cmd.extend(["--add-data", f"{bin_folder}{sep}bin"])
+        for b_file in bin_folder.iterdir():
+            if b_file.is_file() and b_file.name != "README.md":
+                cmd.extend(["--add-binary", f"{b_file}{sep}bin"])
+                print(f"[+] Incrustando binario autónomo: {b_file.name}")
 
     # Archivo de entrada principal
     cmd.append(str(ROOT_DIR / "app.py"))
 
-    print(f"[*] Compilando en modo '{mode}' para {'Windows' if is_windows else 'Linux'}...")
+    print(f"[*] Compilando ejecutable único en modo '{mode}' para {'Windows' if is_windows else 'Linux'}...")
     print("    Comando:", " ".join(cmd))
     res = subprocess.run(cmd)
 
@@ -107,15 +111,21 @@ def build_release(mode: str = "onedir", windowed: bool = True):
         return False
 
     print("\n[+] Compilación completada con éxito.")
-    bundle_target = DIST_DIR / target_name
-    print(f"    Directorio de distribución: {bundle_target}")
+    output_ext = ".exe" if is_windows else ""
+    if mode == "onefile":
+        out_file = DIST_DIR / f"{target_name}{output_ext}"
+        print(f"    Ejecutable generado: {out_file}")
+    else:
+        out_dir = DIST_DIR / target_name
+        print(f"    Directorio generado: {out_dir}")
     return True
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compilador PyInstaller para PureTrack Suite")
-    parser.add_argument("--mode", choices=["onedir", "onefile"], default="onedir", help="Modo de empaquetado")
+    parser.add_argument("--name", default="PureTrack", help="Nombre del ejecutable de salida")
+    parser.add_argument("--mode", choices=["onefile", "onedir"], default="onefile", help="Modo de empaquetado (por defecto onefile)")
     parser.add_argument("--console", action="store_true", help="Mantener ventana de consola para depuración")
     args = parser.parse_args()
 
-    build_release(mode=args.mode, windowed=not args.console)
+    build_release(name=args.name, mode=args.mode, windowed=not args.console)

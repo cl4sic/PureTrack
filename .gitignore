@@ -9,16 +9,29 @@ venv/
 dist/
 build/
 *.spec
+PureTrack.spec
 
 # Caches and logs
 output/metadata_cache.db
+output/rename_log.json
 .write_test
 
-# Binaries and packages
+# Heavy external audio binaries (keep bin/README.md)
+bin/*.exe
+bin/ffmpeg
+bin/ffprobe
+bin/fpcalc
+!bin/README.md
+
+# Packages and archives
 *.zip
+*.tar.gz
 *.exe
 *.so
-bin/
 AudioMaster_Windows/
 PureTrack_Windows/
+
+# Media test files
 *.mp3
+*.wav
+*.flac

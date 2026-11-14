@@ -455,6 +455,7 @@ class TestPureTrackIcon(unittest.TestCase):
         self.assertFalse(img.isNull(), "QImage no pudo cargar icon.png")
         self.assertEqual(img.width(), 1024)
         self.assertEqual(img.height(), 1024)
+        self.assertEqual(img.pixelColor(10, 10).alpha(), 0, "El fondo de icon.png debe ser 100% transparente")
 
         # Verificar carga en QIcon
         ico = QIcon(str(ico_path))
@@ -462,6 +463,58 @@ class TestPureTrackIcon(unittest.TestCase):
         sizes = [s.width() for s in ico.availableSizes()]
         for expected_size in [16, 32, 48, 64, 128, 256]:
             self.assertIn(expected_size, sizes, f"icon.ico no contiene la resolución requerida {expected_size}x{expected_size}")
+
+
+class TestAuditorIntegrityAndCorruptionFilter(unittest.TestCase):
+    """Pruebas de filtrado de falsos positivos en auditoría acústica."""
+
+    def setUp(self):
+        from core.auditor import AudioAuditor
+        self.auditor = AudioAuditor()
+
+    def test_benign_warnings_filtered(self):
+        """Verifica que patrones benignos en stderr de FFmpeg no fallen la comprobación de integridad."""
+        from unittest.mock import patch, MagicMock
+
+        # Simular salida de FFmpeg con retorno 0 pero stderr con advertencias benignas típicas
+        mock_res = MagicMock()
+        mock_res.returncode = 0
+        mock_res.stderr = (
+            "[mp3float @ 0x556] Header missing\n"
+            "[aist#0:0/mp3 @ 0x556] [dec:mp3float @ 0x556] Error submitting packet to decoder: Invalid data found when processing input\n"
+            "[mjpeg @ 0x556] overread, skip\n"
+            "Could not update timestamps for skipped samples\n"
+        )
+
+        with patch("core.auditor.run_hidden_subprocess", return_value=mock_res):
+            ok, err = self.auditor.check_ffmpeg_integrity(Path("/fake/track.mp3"))
+            self.assertTrue(ok, "Los avisos benignos deben filtrarse y marcar ok=True")
+            self.assertEqual(err, "")
+
+    def test_fatal_errors_not_filtered(self):
+        """Verifica que fallos reales de FFmpeg (returncode != 0 o errores no benignos) se marquen como fallo."""
+        from unittest.mock import patch, MagicMock
+
+        mock_res = MagicMock()
+        mock_res.returncode = 183
+        mock_res.stderr = "Failed to find two consecutive MPEG audio frames.\nError opening input: Invalid data found when processing input"
+
+        with patch("core.auditor.run_hidden_subprocess", return_value=mock_res):
+            ok, err = self.auditor.check_ffmpeg_integrity(Path("/fake/corrupt.mp3"))
+            self.assertFalse(ok, "Un fallo con returncode != 0 debe marcar ok=False")
+            self.assertIn("Error opening input", err)
+
+    def test_uploaded_audio_files_evaluated_as_apta(self):
+        """Verifica que los archivos MP3 reales adjuntos por el usuario sean auditados como APTA sin falsos positivos."""
+        uploaded_dir = Path("/home/cl4sic/.gemini/antigravity/brain/9c655c3a-371c-444a-8060-35f03d9ee538/.user_uploaded")
+        mp3_files = list(uploaded_dir.glob("*.mp3"))
+        if not mp3_files:
+            self.skipTest("No se encontraron archivos .mp3 en la carpeta de subidas de usuario.")
+
+        for mp3_path in mp3_files:
+            res = self.auditor.audit_file(mp3_path)
+            self.assertTrue(res.ffmpeg_integrity_ok, f"Falso positivo en integridad FFmpeg para {mp3_path.name}: {res.ffmpeg_errors}")
+            self.assertEqual(res.verdict, "APTA", f"La pista {mp3_path.name} debe ser APTA, no {res.verdict} (Motivo: {res.verdict_reason})")
 
 
 if __name__ == "__main__":

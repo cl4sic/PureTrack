@@ -326,7 +326,6 @@ class MainWindow(QMainWindow):
         # -------------------------------------------------------------
         self.progress_panel = ProgressPanel()
         self.progress_panel.audit_requested.connect(self.start_audit)
-        self.progress_panel.dry_run_requested.connect(self.start_dry_run)
         self.progress_panel.apply_requested.connect(self.start_apply)
         self.progress_panel.rollback_requested.connect(self.start_rollback)
         self.progress_panel.pause_requested.connect(self._pause_worker)
@@ -472,26 +471,6 @@ class MainWindow(QMainWindow):
         self.current_worker.sig_eta.connect(self.progress_panel.update_eta)
         self.current_worker.sig_log.connect(self.progress_panel.append_log)
         self.current_worker.sig_finished.connect(self._on_worker_finished)
-        self.current_worker.start()
-
-    def start_dry_run(self):
-        """Simula la resolución de metadatos y el renombrado."""
-        files = [Path(fp) for fp, d in self.tracks_data.items() if not d.get("excluded", False)]
-        if not files:
-            QMessageBox.information(self, t("dialogs.no_tracks_title"), t("dialogs.no_dry_run_tracks"))
-            return
-
-        self.progress_panel.set_operation_active(True)
-        self.progress_panel.reset_progress()
-
-        pattern = self.inspector.get_pattern()
-        self.current_worker = EnrichWorker(files, naming_pattern=pattern)
-        self.current_worker.sig_track_resolved.connect(self._on_track_resolved)
-        self.current_worker.sig_progress.connect(self.progress_panel.update_global_progress)
-        self.current_worker.sig_item_progress.connect(self.progress_panel.update_item_progress)
-        self.current_worker.sig_eta.connect(self.progress_panel.update_eta)
-        self.current_worker.sig_log.connect(self.progress_panel.append_log)
-        self.current_worker.sig_finished.connect(self._on_enrich_finished_for_dry_run)
         self.current_worker.start()
 
     def start_apply(self):
@@ -735,11 +714,6 @@ class MainWindow(QMainWindow):
     def _on_worker_finished(self, success: bool, summary: str):
         self.progress_panel.set_operation_active(False)
         self.current_worker = None
-
-    def _on_enrich_finished_for_dry_run(self, success: bool, summary: str):
-        self.progress_panel.set_operation_active(False)
-        self.current_worker = None
-        self.progress_panel.append_log("SUCCESS", "[DRY-RUN] Simulación completa. Nombres proyectados visibles en la tabla.")
 
     def _on_apply_finished(self, success: bool, summary: str):
         self.progress_panel.set_operation_active(False)

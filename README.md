@@ -5,7 +5,7 @@
 [![Engine](https://img.shields.io/badge/Audio-FFmpeg%20%7C%20Mutagen%20%7C%20Chromaprint-orange.svg)](https://ffmpeg.org)
 [![Theme](https://img.shields.io/badge/Theme-AIMP%20Dark-amber.svg)](https://www.aimp.ru)
 [![i18n](https://img.shields.io/badge/i18n-Auto%20%7C%20ES%20%7C%20EN-cyan.svg)](locales/)
-[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 *Read this documentation in other languages:* [Español (README_ES.md)](README_ES.md) | [Manual de Usuario en Español (MANUAL_USUARIO.md)](MANUAL_USUARIO.md) | [Full User Manual in English (USER_MANUAL.md)](USER_MANUAL.md).
 
@@ -17,10 +17,20 @@
 
 ---
 
+## Downloads (GitHub Releases)
+
+For end users, standalone single-file executables (`--onefile`) are published on every release under the **[Releases](../../releases)** tab:
+- **Windows x64:** `PureTrack-Windows-x64.exe` (Standalone portable single `.exe` with embedded FFmpeg & Chromaprint).
+- **Linux x64:** `PureTrack-Linux-x64` (Standalone ELF executable).
+
+No external dependencies or console scripts are required; simply download and run.
+
+---
+
 ## Key Features
 
 - **Professional Multi-Language System (i18n):** Native internationalization with automatic OS system language detection (`Auto`). Supports hot live language switching between **Español** and **English** across all UI controls, badges, inspector panels, context menus, and dialogs without restarting.
-- **Dedicated High-Resolution Branding:** Distinctive high-resolution acoustic vector icon (`gui/assets/icon.png` 1024x1024 and `gui/assets/icon.ico` multi-resolution 16–256px) integrated directly into the window manager and Windows taskbar (`AppUserModelID`).
+- **Dedicated High-Resolution Branding:** Distinctive high-resolution acoustic vinyl record + ID3 tag icon (`gui/assets/icon.png` 1024x1024 with 100% transparent RGBA background, and `gui/assets/icon.ico` multi-resolution 16–256px) integrated directly into the window manager and Windows taskbar (`AppUserModelID`).
 - **Non-Blocking Multithreaded Concurrency:** Powered by dedicated `QThread` workers with `QMutex` and `QWaitCondition` synchronization. Audit waveform metrics, calculate acoustic fingerprints, query local metadata caches, and apply disk transactions without ever freezing the UI. Supports live **Pause**, **Resume**, and **Cancel**.
 - **AIMP Dark Aesthetics:** Charcoal background (`#18191c`), card panels (`#222327`), subtle borders (`#2e3036`), and dual accent themes (**Classic AIMP Amber `#ff9800`** and **Modern Tech Cyan `#00b4d8`**), switchable in real time.
 - **Deep Acoustic Quality Diagnostics:**
@@ -29,6 +39,7 @@
   - Dynamic range and total RMS calculations.
   - Abrupt ending detection (analyzing energy in the final 400 ms and 100 ms to detect cutoff tracks).
   - In-track anomalous silence detection using FFmpeg `silencedetect` (ignores natural intros/outros).
+  - Robust corruption analysis with benign packet warning suppression (Xing, LAME, cover-art MJPEG/PNG streams).
 - **Interactive Pattern Builder:** Text entry with clickable dynamic token chips (`{artist}`, `{feat}`, `{title}`, `{remix}`, `{album}`, `{year}`, `{genre}`) and live real-time preview on a sample track while typing.
 - **Custom Naming & Manual Overrides:** Ability to manually override projected filenames before applying changes to disk, prefilling current projected or original names and guaranteeing persistence without pattern overwrites.
 - **Configurable ID3v2 Mapping:** Define custom token mappings for ID3v2.3 tags (`TIT2`, `TPE1`, `TALB`, `TPE2`, `TCON`, `TDRC`) with explicit UTF-8 encoding while preserving existing album artwork (`APIC`).
@@ -42,6 +53,9 @@
 
 ```
 PureTrack/
+├── .github/
+│   └── workflows/
+│       └── release.yml    # Automated CI/CD release workflow for Windows & Linux
 ├── core/
 │   ├── auditor.py         # Technical acoustic analysis (FFmpeg, mutagen, clipping, silences, cuts)
 │   ├── common_utils.py    # Autonomous binary locator, long paths (\\?\), NTFS sanitization, hidden subprocesses
@@ -52,7 +66,7 @@ PureTrack/
 ├── gui/
 │   ├── assets/
 │   │   ├── icon.ico       # Windows multi-resolution icon (16x16 up to 256x256)
-│   │   └── icon.png       # Master 1024x1024 high-res vector application icon
+│   │   └── icon.png       # Master 1024x1024 high-res transparent application icon
 │   ├── main_window.py     # Main window, Drag & Drop, resizable splitter, context menus, i18n switcher
 │   ├── widgets/
 │   │   ├── audio_badge.py      # Quality status badges (Localized: APTA/OK, ALERTA/WARNING, ERROR, EXCLUIDA/EXCLUDED)
@@ -66,13 +80,13 @@ PureTrack/
 ├── locales/
 │   ├── en.json            # English translations
 │   └── es.json            # Spanish translations
-├── bin/                   # Portable external binaries (ffmpeg.exe, ffprobe.exe, fpcalc.exe)
+├── bin/
+│   └── README.md          # Guide for local audio binaries (ffmpeg, ffprobe, fpcalc)
 ├── package/
-│   ├── build_release.py   # Standalone PyInstaller release builder for PureTrack
-│   ├── package_windows_zip.py # Portable CRLF-compliant Windows packaging utility
-│   └── windows_scripts/   # 1-click Windows compilation & launch scripts
+│   └── build_release.py   # Standalone PyInstaller release builder for PureTrack (--onefile)
 ├── app.py                 # Application entry point
 ├── requirements.txt       # Dependencies
+├── LICENSE                # GNU General Public License v3.0 (GPLv3)
 ├── USER_MANUAL.md         # Detailed user manual (English)
 ├── MANUAL_USUARIO.md      # Detailed user manual (Spanish)
 └── test_suite.py          # Comprehensive test suite
@@ -82,7 +96,7 @@ PureTrack/
 
 ## Quick Start Guide
 
-### Running on Linux
+### Running from Source on Linux
 ```bash
 # 1. Clone or enter the repository
 cd music-sanitizer-Cl4sic
@@ -94,27 +108,10 @@ source .venv/bin/activate
 python app.py
 ```
 
-### Running on Windows (Portable Package)
-1. Download **`PureTrack_Windows.zip`** from this repository and unzip it.
-2. Double-click **`compilar_exe_en_windows.bat`** to build the standalone `.exe` (which also asks if you want to launch it immediately).
-3. To open it in the future, simply double-click **`ejecutar_PureTrack.bat`** (or open `dist\PureTrack\PureTrack.exe`).
-   *External audio binaries (`ffmpeg.exe`, `ffprobe.exe`, `fpcalc.exe`) are already pre-bundled in the `bin/` folder!*
-
----
-
-## Building Standalone Executables (PyInstaller)
-
-### On Linux (Standalone ELF binary)
+### Building Standalone Executables Locally (PyInstaller)
 ```bash
-python package/build_release.py --mode onedir
-# Distribution output created in: dist/PureTrack/PureTrack
-```
-
-### On Windows (Native .exe)
-Simply double-click:
-```cmd
-compilar_exe_en_windows.bat
-# Executable created in: dist\PureTrack\PureTrack.exe
+# Standalone single-file binary (--onefile)
+python package/build_release.py --mode onefile
 ```
 
 ---
@@ -140,8 +137,6 @@ QT_QPA_PLATFORM=offscreen python test_suite.py
 
 ---
 
-## Documentation
+## License
 
-- **[Full User Manual in English (USER_MANUAL.md)](USER_MANUAL.md)**
-- **[Manual de Usuario Completo en Español (MANUAL_USUARIO.md)](MANUAL_USUARIO.md)**
-- **[Spanish README (README_ES.md)](README_ES.md)**
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the [LICENSE](LICENSE) file for details.

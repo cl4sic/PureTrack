@@ -13,10 +13,9 @@
    - [Constructor Visual de Patrones (Pattern Builder)](#constructor-visual-de-patrones-pattern-builder)
    - [Panel Inferior: Telemetría, Progreso Dual y Consola](#panel-inferior-telemetría-progreso-dual-y-consola)
 3. [Flujo de Trabajo Operativo](#3-flujo-de-trabajo-operativo)
-   - [Fase 1: Auditoría Técnica y Diagnóstico](#fase-1-auditoría-técnica-y-diagnóstico)
-   - [Fase 2: Resolución de Metadatos y Simulación (Dry-Run)](#fase-2-resolución-de-metadatos-y-simulación-dry-run)
-   - [Fase 3: Aplicación Segura en Disco](#fase-3-aplicación-segura-en-disco)
-   - [Fase 4: Reversión Completa (Rollback)](#fase-4-reversión-completa-rollback)
+   - [Fase 1: Auditoría Técnica y Proyección Segura](#fase-1-auditoría-técnica-y-proyección-segura)
+   - [Fase 2: Aplicación Segura en Disco](#fase-2-aplicación-segura-en-disco)
+   - [Fase 3: Reversión Completa (Rollback)](#fase-3-reversión-completa-rollback)
 4. [Sistema Multi-idioma (i18n) e Identidad Visual](#4-sistema-multi-idioma-i18n-e-identidad-visual)
 5. [Configuración Persistente y Presets](#5-configuración-persistente-y-presets)
 6. [Instalación y Uso en Windows y Linux](#6-instalación-y-uso-en-windows-y-linux)
@@ -103,28 +102,24 @@ Haz clic en cualquier token dinámico para insertarlo en la posición del cursor
 
 ## 3. Flujo de Trabajo Operativo
 
-### Fase 1: Auditoría Técnica y Diagnóstico
+### Fase 1: Auditoría Técnica y Proyección Segura
 1. Carga tus pistas mediante Drag & Drop o con el botón **Examinar...**.
-2. Pulsa **Auditar Biblioteca**.
-3. El motor analizará cada pista en segundo plano, midiendo clipping, integridad y silencios sin ventanas emergentes de consola.
-4. Las insignias de la tabla se actualizarán dinámicamente con el veredicto de calidad.
+2. Ajusta tu patrón preferido en el **Pattern Builder** si deseas personalizarlo.
+3. Pulsa **Auditar Biblioteca**.
+4. El motor analizará cada pista en segundo plano, midiendo clipping, integridad, silencios y proyectando automáticamente los nuevos nombres limpios en la columna **Nombre Proyectado** sin tocar el disco.
+5. Las insignias de la tabla se actualizarán dinámicamente con el veredicto de calidad.
 
-### Fase 2: Resolución de Metadatos y Simulación (Dry-Run)
-1. Ajusta tu patrón preferido en el **Pattern Builder**.
-2. Pulsa **Simular (Dry-Run)**.
-3. El sistema consultará la base canónica local, la caché SQLite (`output/metadata_cache.db`) y calculará las huellas Chromaprint.
-4. En la columna **Nombre Proyectado** verás el resultado exacto sin modificar ningún archivo físico.
-
-### Fase 3: Aplicación Segura en Disco
-1. Pulsa **Aplicar en Disco**.
-2. Confirma el cuadro de diálogo de seguridad.
-3. PureTrack:
+### Fase 2: Aplicación Segura en Disco
+1. Revisa los nombres proyectados y personaliza manualmente cualquiera si lo deseas.
+2. Pulsa **Aplicar en Disco**.
+3. Confirma el cuadro de diálogo de seguridad.
+4. PureTrack:
    - Guardará el registro de operaciones en `output/rename_log.json`.
    - Escribirá los metadatos ID3v2.3 en UTF-8 preservando las carátulas.
    - Renombrará los archivos en disco aplicando el saneamiento NTFS y respetando nombres personalizados.
    - Verificará la integridad con FFmpeg tras el guardado.
 
-### Fase 4: Reversión Completa (Rollback)
+### Fase 3: Reversión Completa (Rollback)
 Si necesitas deshacer cualquier cambio:
 1. Pulsa **Deshacer (Rollback)**.
 2. Confirma la acción en el cuadro de diálogo.

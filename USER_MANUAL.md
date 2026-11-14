@@ -13,10 +13,9 @@
    - [Pattern Builder & Dynamic Tokens](#pattern-builder--dynamic-tokens)
    - [Telemetry & Dual Progress Bar (Bottom Panel)](#telemetry--dual-progress-bar-bottom-panel)
 3. [Core Capabilities & Workflows](#3-core-capabilities--workflows)
-   - [Phase 1: Technical Acoustic Audit](#phase-1-technical-acoustic-audit)
-   - [Phase 2: Metadata Resolution & Live Projection](#phase-2-metadata-resolution--live-projection)
-   - [Phase 3: Safe Disk Execution & Dry-Run](#phase-3-safe-disk-execution--dry-run)
-   - [Phase 4: Instant 100% Reversible Rollback](#phase-4-instant-100-reversible-rollback)
+   - [Phase 1: Technical Acoustic Audit & Live Projection](#phase-1-technical-acoustic-audit--live-projection)
+   - [Phase 2: Safe Disk Execution](#phase-2-safe-disk-execution)
+   - [Phase 3: Instant 100% Reversible Rollback](#phase-3-instant-100-reversible-rollback)
 4. [Multi-Language System (i18n) & Visual Identity](#4-multi-language-system-i18n--visual-identity)
 5. [Customization & Presets](#5-customization--presets)
 6. [Windows & Linux Distribution](#6-windows--linux-distribution)
@@ -118,28 +117,24 @@ Click any token button to insert it at your cursor's position:
 
 ## 3. Core Capabilities & Workflows
 
-### Phase 1: Technical Acoustic Audit
+### Phase 1: Technical Acoustic Audit & Live Projection
 1. Load tracks via Drag & Drop or the **Examinar...** button.
-2. Click **Auditar Biblioteca**.
-3. PureTrack analyzes every track in the background without console popup windows.
-4. Each row updates its badge immediately upon completion.
+2. Adjust your desired naming pattern in the **Pattern Builder** if you wish to customize it.
+3. Click **Auditar Biblioteca**.
+4. PureTrack analyzes every track in the background without console popup windows, verifying stream integrity, acoustic metrics, and automatically populating the **Nombre Proyectado** column with clean normalized filenames.
+5. Each row updates its badge immediately upon completion.
 
-### Phase 2: Metadata Resolution & Live Projection
-1. Adjust your desired naming pattern in the **Pattern Builder**.
-2. Click **Simular (Dry-Run)**.
-3. PureTrack queries the local persistent SQLite cache (`output/metadata_cache.db`), matches canonical catalogs, calculates Chromaprint fingerprints, and populates the **Nombre Proyectado** column.
-4. Review the projected names before committing any changes.
-
-### Phase 3: Safe Disk Execution
-1. Click **Aplicar en Disco**.
-2. A confirmation prompt displays the total number of files to modify.
-3. PureTrack:
+### Phase 2: Safe Disk Execution
+1. Review the projected names and customize any song manually if desired.
+2. Click **Aplicar en Disco**.
+3. A confirmation prompt displays the total number of files to modify.
+4. PureTrack:
    - Writes the transaction manifest to `output/rename_log.json`.
    - Writes normalized ID3v2.3 tags with UTF-8 encoding (preserving embedded artwork).
    - Safely renames the files on disk using Windows NTFS sanitization, respecting custom name overrides.
    - Validates post-write integrity with FFmpeg.
 
-### Phase 4: Instant 100% Reversible Rollback
+### Phase 3: Instant 100% Reversible Rollback
 If you ever want to revert all changes:
 1. Click **Deshacer (Rollback)**.
 2. Confirm the prompt.

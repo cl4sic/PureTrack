@@ -6,6 +6,11 @@
 chcp 65001 >nul
 title PureTrack Suite
 
+if exist "dist\PureTrack.exe" (
+    start "" "dist\PureTrack.exe"
+    exit /b 0
+)
+
 if exist "dist\PureTrack\PureTrack.exe" (
     start "" "dist\PureTrack\PureTrack.exe"
     exit /b 0

@@ -19,6 +19,7 @@ from core.auditor import AudioAuditor, AudioAuditResult
 from core.resolver import MetadataResolver, ResolvedMetadata
 from core.tagger import AudioTagger
 from core.config_manager import ConfigManager
+from core.i18n import t
 
 
 class BaseAudioWorker(QThread):
@@ -137,15 +138,15 @@ class AuditWorker(BaseAudioWorker):
             self.sig_progress.emit(idx - 1, total, fpath.name)
 
             # Paso 1: Comprobación de integridad
-            self.sig_item_progress.emit(1, 4, "Decodificación e Integridad FFmpeg")
+            self.sig_item_progress.emit(1, 4, t("progress.step_ffmpeg", "Decodificación e Integridad FFmpeg"))
             if self._check_pause_and_cancel():
                 self.sig_finished.emit(False, "Auditoría cancelada.")
                 return
 
             # Paso 2: Análisis completo
-            self.sig_item_progress.emit(2, 4, "Extracción de Bitrate y Streams")
+            self.sig_item_progress.emit(2, 4, t("progress.step_bitrate", "Extracción de Bitrate y Streams"))
             # Paso 3: Silencios y Espectro acústico
-            self.sig_item_progress.emit(3, 4, "Análisis de Espectro, Clipping y Silencios")
+            self.sig_item_progress.emit(3, 4, t("progress.step_spectrum", "Análisis de Espectro, Clipping y Silencios"))
             try:
                 res: AudioAuditResult = self.auditor.audit_file(fpath)
                 try:
@@ -156,7 +157,7 @@ class AuditWorker(BaseAudioWorker):
                 except Exception:
                     res.resolved_metadata = None
 
-                self.sig_item_progress.emit(4, 4, "Diagnóstico finalizado")
+                self.sig_item_progress.emit(4, 4, t("progress.step_done", "Diagnóstico finalizado"))
 
                 self.sig_track_audited.emit(res)
                 processed += 1
@@ -286,7 +287,7 @@ class ApplyWorker(BaseAudioWorker):
                 return
 
             self.sig_progress.emit(idx, total, meta.new_filename)
-            self.sig_item_progress.emit(1, 2, "Actualizando etiquetas ID3v2...")
+            self.sig_item_progress.emit(1, 2, t("progress.step_tagging", "Actualizando etiquetas ID3v2..."))
 
             if self.dry_run:
                 msg = f"[DRY-RUN] Proyectado: {src_path.name} -> {dst_path.name}"

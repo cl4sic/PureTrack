@@ -52,7 +52,6 @@
   },
   "buttons": {
     "audit": "Audit Library",
-    "dry_run": "Simulate (Dry-Run)",
     "apply": "Apply to Disk",
     "rollback": "Rollback",
     "pause": "Pause",
@@ -68,9 +67,18 @@
   "progress": {
     "overall": "Overall Progress:",
     "current_item": "Current Track:",
+    "current_step": "Current Step:",
+    "processing": "Processing [{count}/{total}]",
     "console_title": "Real-Time Diagnostic & Telemetry Console",
     "eta": "Remaining time: {eta}s | Speed: {speed} tracks/s",
-    "ready": "Ready to process"
+    "ready": "Ready to process",
+    "step_ffmpeg": "FFmpeg Decode & Integrity Check",
+    "step_bitrate": "Extracting Bitrate & Streams",
+    "step_spectrum": "Waveform, Clipping & Silence Analysis",
+    "step_done": "Diagnostics Complete",
+    "step_tagging": "Updating ID3v2 Tags...",
+    "step_renaming": "Renaming on Disk...",
+    "step_restoring": "Restoring Original Names & Tags..."
   },
   "inspector": {
     "title": "Metadata & Quality Inspector",
@@ -105,7 +113,6 @@
     "confirm_rollback_msg": "Do you want to restore original filenames and ID3 tags from the last log?\n\nThis will revert all applied changes.",
     "no_tracks_title": "No tracks",
     "no_tracks_msg": "No MP3 files available to audit.",
-    "no_dry_run_tracks": "No files to simulate.",
     "no_apply_tracks": "No valid operations to apply.",
     "process_finished": "Process Completed",
     "rollback_success": "Rollback Successful",

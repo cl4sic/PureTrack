@@ -54,11 +54,6 @@ def resolve_puretrack_icon() -> QIcon:
         if ico_path.exists():
             return QIcon(str(ico_path))
 
-    # Fallback si no se localiza en assets
-    fallback_png = APP_ROOT / "gui" / "icons" / "app_icon.png"
-    if fallback_png.exists():
-        return QIcon(str(fallback_png))
-
     return QIcon()
 
 
