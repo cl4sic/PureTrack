@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag version (e.g. v1.1.9)'
+        required: false
+        default: 'v1.1.9'
 
 permissions:
   contents: write
@@ -30,47 +35,72 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Download Windows Audio Binaries (FFmpeg & Chromaprint)
+      - name: Setup Windows Audio Binaries (FFmpeg & Chromaprint)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path bin
+          $ErrorActionPreference = "Stop"
+          $ProgressPreference = "SilentlyContinue"
           
-          # Descargar FFmpeg essentials
-          $ffmpegZip = "$env:TEMP\ffmpeg.zip"
-          Write-Host "Descargando FFmpeg de Gyan.dev..."
-          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile $ffmpegZip
-          Expand-Archive -Path $ffmpegZip -DestinationPath "$env:TEMP\ffmpeg_ext" -Force
-          $ffmpegBin = (Get-ChildItem -Path "$env:TEMP\ffmpeg_ext" -Recurse -Filter "ffmpeg.exe").FullName
-          $ffprobeBin = (Get-ChildItem -Path "$env:TEMP\ffmpeg_ext" -Recurse -Filter "ffprobe.exe").FullName
-          Copy-Item $ffmpegBin -Destination "bin\ffmpeg.exe"
-          Copy-Item $ffprobeBin -Destination "bin\ffprobe.exe"
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          
+          # 1. Localizar o instalar FFmpeg y FFprobe
+          $ffmpegCmd = Get-Command ffmpeg -ErrorAction SilentlyContinue
+          $ffprobeCmd = Get-Command ffprobe -ErrorAction SilentlyContinue
+          
+          if (-not ($ffmpegCmd -and $ffprobeCmd)) {
+              Write-Host "FFmpeg no detectado en PATH, instalando mediante Chocolatey..."
+              choco install ffmpeg -y --no-progress
+              $ffmpegCmd = Get-Command ffmpeg
+              $ffprobeCmd = Get-Command ffprobe
+          }
+          
+          Write-Host "Copiando FFmpeg desde: $($ffmpegCmd.Source)"
+          Copy-Item -Path $ffmpegCmd.Source -Destination "bin\ffmpeg.exe" -Force
+          Write-Host "Copiando FFprobe desde: $($ffprobeCmd.Source)"
+          Copy-Item -Path $ffprobeCmd.Source -Destination "bin\ffprobe.exe" -Force
 
-          # Descargar fpcalc (Chromaprint x64)
+          # 2. Descargar fpcalc (Chromaprint x64) usando curl nativo
+          Write-Host "Descargando fpcalc desde AcoustID..."
           $fpcalcZip = "$env:TEMP\chromaprint.zip"
-          Write-Host "Descargando fpcalc de AcoustID..."
-          Invoke-WebRequest -Uri "https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-windows-x86_64.zip" -OutFile $fpcalcZip
-          Expand-Archive -Path $fpcalcZip -DestinationPath "$env:TEMP\fpcalc_ext" -Force
-          $fpcalcBin = (Get-ChildItem -Path "$env:TEMP\fpcalc_ext" -Recurse -Filter "fpcalc.exe").FullName
-          Copy-Item $fpcalcBin -Destination "bin\fpcalc.exe"
+          curl.exe -sSL --retry 5 --connect-timeout 20 -o $fpcalcZip "https://github.com/acoustid/chromaprint/releases/download/v1.5.1/chromaprint-fpcalc-1.5.1-windows-x86_64.zip"
+          
+          $fpcalcExtract = "$env:TEMP\chromaprint_extracted"
+          New-Item -ItemType Directory -Force -Path $fpcalcExtract | Out-Null
+          tar.exe -xf $fpcalcZip -C $fpcalcExtract
+          
+          $fpcalcItem = Get-ChildItem -Path $fpcalcExtract -Recurse -Filter "fpcalc.exe" | Select-Object -First 1
+          if (-not $fpcalcItem) {
+              throw "No se encontró fpcalc.exe en el archivo extraído."
+          }
+          Write-Host "Copiando fpcalc desde: $($fpcalcItem.FullName)"
+          Copy-Item -Path $fpcalcItem.FullName -Destination "bin\fpcalc.exe" -Force
 
-          Write-Host "Binarios verificados en bin\:"
+          # 3. Validar existencia de todos los binarios
+          Write-Host "Verificando binarios en bin\:"
           Get-ChildItem bin\
-
-      - name: Generate High-Resolution Transparent Icon
-        shell: pwsh
-        run: |
-          python scripts/generate_icon.py
+          if (-not (Test-Path "bin\ffmpeg.exe") -or -not (Test-Path "bin\ffprobe.exe") -or -not (Test-Path "bin\fpcalc.exe")) {
+              throw "Error crítico: Faltan binarios obligatorios en bin\"
+          }
 
       - name: Build PureTrack-Windows-x64.exe (Onefile)
         shell: pwsh
         run: |
           python package/build_release.py --name PureTrack-Windows-x64 --mode onefile
 
-      - name: Upload Windows Binary Artifact
+      - name: Package Windows ZIP Distribution
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\PureTrack-Windows-x64.exe -DestinationPath dist\PureTrack-Windows-x64.zip -Force
+          Write-Host "ZIP generado con éxito:"
+          Get-Item dist\PureTrack-Windows-x64.zip
+
+      - name: Upload Windows Binary Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: PureTrack-Windows-x64
-          path: dist/PureTrack-Windows-x64.exe
+          path: |
+            dist/PureTrack-Windows-x64.exe
+            dist/PureTrack-Windows-x64.zip
 
   build-linux:
     name: Build Standalone Linux Executable
@@ -106,10 +136,6 @@ jobs:
           chmod +x bin/*
           ls -la bin/
 
-      - name: Generate High-Resolution Transparent Icon
-        run: |
-          QT_QPA_PLATFORM=offscreen python scripts/generate_icon.py
-
       - name: Run Test Suite
         run: |
           QT_QPA_PLATFORM=offscreen python test_suite.py
@@ -118,12 +144,15 @@ jobs:
         run: |
           python package/build_release.py --name PureTrack-Linux-x64 --mode onefile
           chmod +x dist/PureTrack-Linux-x64
+          tar -czvf dist/PureTrack-Linux-x64.tar.gz -C dist PureTrack-Linux-x64
 
-      - name: Upload Linux Binary Artifact
+      - name: Upload Linux Binary Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: PureTrack-Linux-x64
-          path: dist/PureTrack-Linux-x64
+          path: |
+            dist/PureTrack-Linux-x64
+            dist/PureTrack-Linux-x64.tar.gz
 
   release:
     name: Publish GitHub Release
@@ -132,13 +161,13 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download Windows Artifact
+      - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
           name: PureTrack-Windows-x64
           path: artifacts
 
-      - name: Download Linux Artifact
+      - name: Download Linux Artifacts
         uses: actions/download-artifact@v4
         with:
           name: PureTrack-Linux-x64
@@ -148,14 +177,25 @@ jobs:
         run: |
           ls -la artifacts/
 
+      - name: Determine Release Tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             artifacts/PureTrack-Windows-x64.exe
+            artifacts/PureTrack-Windows-x64.zip
             artifacts/PureTrack-Linux-x64
-          name: PureTrack ${{ github.ref_name }}
-          tag_name: ${{ github.ref }}
+            artifacts/PureTrack-Linux-x64.tar.gz
+          name: PureTrack ${{ steps.vars.outputs.tag }}
+          tag_name: ${{ steps.vars.outputs.tag }}
           generate_release_notes: true
           draft: false
           prerelease: false

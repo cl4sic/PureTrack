@@ -1,13 +1,29 @@
-# PureTrack Suite
+<p align="center">
+  <img src="gui/assets/icon.png" width="130" height="130" alt="PureTrack Icon">
+</p>
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue.svg)](https://github.com)
-[![Framework](https://img.shields.io/badge/GUI-PySide6%20%28Qt%206%29-brightgreen.svg)](https://www.qt.io/)
-[![Engine](https://img.shields.io/badge/Audio-FFmpeg%20%7C%20Mutagen%20%7C%20Chromaprint-orange.svg)](https://ffmpeg.org)
-[![Theme](https://img.shields.io/badge/Theme-AIMP%20Dark-amber.svg)](https://www.aimp.ru)
-[![i18n](https://img.shields.io/badge/i18n-Auto%20%7C%20ES%20%7C%20EN-cyan.svg)](locales/)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+<h1 align="center">PureTrack Suite</h1>
 
-*Read this documentation in other languages:* [Español (README_ES.md)](README_ES.md) | [Manual de Usuario en Español (MANUAL_USUARIO.md)](MANUAL_USUARIO.md) | [Full User Manual in English (USER_MANUAL.md)](USER_MANUAL.md).
+<p align="center">
+  <b>Advanced Desktop Audio Engineering, Metadata Normalization & Acoustic Sanitization Suite</b>
+  <br>
+  <i>Built with Python, PySide6 (Qt 6), FFmpeg, Chromaprint, Mutagen, SoundFile & NumPy</i>
+</p>
+
+<p align="center">
+  <a href="https://github.com"><img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue.svg" alt="Platform"></a>
+  <a href="https://www.qt.io/"><img src="https://img.shields.io/badge/GUI-PySide6%20%28Qt%206%29-brightgreen.svg" alt="Framework"></a>
+  <a href="https://ffmpeg.org"><img src="https://img.shields.io/badge/Audio-FFmpeg%20%7C%20Mutagen%20%7C%20Chromaprint-orange.svg" alt="Engine"></a>
+  <a href="https://www.aimp.ru"><img src="https://img.shields.io/badge/Theme-AIMP%20Dark-amber.svg" alt="Theme"></a>
+  <a href="locales/"><img src="https://img.shields.io/badge/i18n-Auto%20%7C%20ES%20%7C%20EN-cyan.svg" alt="i18n"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
+</p>
+
+<p align="center">
+  <a href="README_ES.md"><b>Español (README_ES.md)</b></a> | 
+  <a href="MANUAL_USUARIO.md"><b>Manual de Usuario (ES)</b></a> | 
+  <a href="USER_MANUAL.md"><b>User Manual (EN)</b></a>
+</p>
 
 ---
 
@@ -17,13 +33,43 @@
 
 ---
 
+## Screenshots & User Interface
+
+PureTrack combines technical audio engineering with an intuitive, high-contrast dark aesthetic. Featuring real-time acoustic feedback, dynamic naming patterns, and a collapsible inspector panel:
+
+### 1. Real-Time Acoustic & Metadata Processing
+*Live processing showing dual synchronized progress bars (Batch & Current Track), real-time acoustic analysis (clipping, true bitrates, duration, silences), and the integrated terminal activity log.*
+
+<p align="center">
+  <img src="docs/images/puretrack_processing.jpg" width="100%" alt="PureTrack Processing in Action">
+</p>
+
+### 2. Deep Inspector Panel (Dynamic Pattern Builder & Acoustic Rules)
+*Configuring standard naming patterns with interactive dynamic token chips, live preview on a sample track, and acoustic audit threshold controls (clipping, silences, cuts, minimum bitrate, minimum duration).*
+
+<p align="center">
+  <img src="docs/images/puretrack_inspector.png" width="100%" alt="PureTrack Full Inspector Panel">
+</p>
+
+### 3. Streamlined Library View (Expanded Table)
+*Collapsed inspector panel providing maximum screen real estate for large DJ libraries and high-resolution displays.*
+
+<p align="center">
+  <img src="docs/images/puretrack_table.png" width="100%" alt="PureTrack Streamlined Table View">
+</p>
+
+---
+
 ## Downloads (GitHub Releases)
 
-For end users, standalone single-file executables (`--onefile`) are published on every release under the **[Releases](../../releases)** tab:
-- **Windows x64:** `PureTrack-Windows-x64.exe` (Standalone portable single `.exe` with embedded FFmpeg & Chromaprint).
-- **Linux x64:** `PureTrack-Linux-x64` (Standalone ELF executable).
+For end users, standalone single-file executables (`--onefile`) and ready-to-use distribution archives are compiled and published automatically on every release under the **[Releases](../../releases)** tab:
 
-No external dependencies or console scripts are required; simply download and run.
+| Distribution File | Operating System | Architecture | Description |
+| :--- | :--- | :--- | :--- |
+| **`PureTrack-Windows-x64.exe`** | Windows 10 / 11 | x86_64 | Standalone portable `.exe` with embedded FFmpeg, FFprobe & Chromaprint. No installation required. |
+| **`PureTrack-Windows-x64.zip`** | Windows 10 / 11 | x86_64 | Compressed standalone executable archive for fast distribution. |
+| **`PureTrack-Linux-x64`** | Linux Distributions | x86_64 | Standalone ELF binary with embedded audio analysis toolchain. |
+| **`PureTrack-Linux-x64.tar.gz`** | Linux Distributions | x86_64 | Compressed tarball distribution for Linux environments. |
 
 ---
 
@@ -56,6 +102,8 @@ PureTrack/
 ├── .github/
 │   └── workflows/
 │       └── release.yml    # Automated CI/CD release workflow for Windows & Linux
+├── docs/
+│   └── images/            # High-resolution application screenshots and diagrams
 ├── core/
 │   ├── auditor.py         # Technical acoustic analysis (FFmpeg, mutagen, clipping, silences, cuts)
 │   ├── common_utils.py    # Autonomous binary locator, long paths (\\?\), NTFS sanitization, hidden subprocesses

@@ -1,13 +1,29 @@
-# PureTrack Suite (Español)
+<p align="center">
+  <img src="gui/assets/icon.png" width="130" height="130" alt="Icono de PureTrack">
+</p>
 
-[![Plataforma](https://img.shields.io/badge/Plataforma-Windows%20%7C%20Linux-blue.svg)](https://github.com)
-[![Framework](https://img.shields.io/badge/GUI-PySide6%20%28Qt%206%29-brightgreen.svg)](https://www.qt.io/)
-[![Motor](https://img.shields.io/badge/Audio-FFmpeg%20%7C%20Mutagen%20%7C%20Chromaprint-orange.svg)](https://ffmpeg.org)
-[![Tema](https://img.shields.io/badge/Tema-AIMP%20Dark-amber.svg)](https://www.aimp.ru)
-[![i18n](https://img.shields.io/badge/i18n-Auto%20%7C%20ES%20%7C%20EN-cyan.svg)](locales/)
-[![Licencia: GPL v3](https://img.shields.io/badge/Licencia-GPLv3-blue.svg)](LICENSE)
+<h1 align="center">PureTrack Suite (Español)</h1>
 
-*Documentación en otros idiomas:* [English README (README.md)](README.md) | [Manual de Usuario en Español (MANUAL_USUARIO.md)](MANUAL_USUARIO.md) | [Full User Manual in English (USER_MANUAL.md)](USER_MANUAL.md).
+<p align="center">
+  <b>Suite de Escritorio Avanzada para Auditoría Acústica, Normalización de Metadatos y Saneamiento Musical</b>
+  <br>
+  <i>Desarrollada con Python, PySide6 (Qt 6), FFmpeg, Chromaprint, Mutagen, SoundFile y NumPy</i>
+</p>
+
+<p align="center">
+  <a href="https://github.com"><img src="https://img.shields.io/badge/Plataforma-Windows%20%7C%20Linux-blue.svg" alt="Plataforma"></a>
+  <a href="https://www.qt.io/"><img src="https://img.shields.io/badge/GUI-PySide6%20%28Qt%206%29-brightgreen.svg" alt="Framework"></a>
+  <a href="https://ffmpeg.org"><img src="https://img.shields.io/badge/Audio-FFmpeg%20%7C%20Mutagen%20%7C%20Chromaprint-orange.svg" alt="Motor"></a>
+  <a href="https://www.aimp.ru"><img src="https://img.shields.io/badge/Tema-AIMP%20Dark-amber.svg" alt="Tema"></a>
+  <a href="locales/"><img src="https://img.shields.io/badge/i18n-Auto%20%7C%20ES%20%7C%20EN-cyan.svg" alt="i18n"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licencia-GPLv3-blue.svg" alt="Licencia"></a>
+</p>
+
+<p align="center">
+  <a href="README.md"><b>English README (README.md)</b></a> | 
+  <a href="MANUAL_USUARIO.md"><b>Manual de Usuario en Español (MANUAL_USUARIO.md)</b></a> | 
+  <a href="USER_MANUAL.md"><b>Full User Manual in English (USER_MANUAL.md)</b></a>
+</p>
 
 ---
 
@@ -17,13 +33,43 @@
 
 ---
 
+## Capturas de Pantalla e Interfaz de Usuario
+
+PureTrack fusiona rigor técnico acústico con una interfaz intuitiva y oscura estilo AIMP de alto contraste, ofreciendo doble acento de color (Ámbar `#ff9800` y Cian `#00b4d8`) y diseño colapsable dinámico:
+
+### 1. Procesamiento Acústico y de Metadatos en Tiempo Real
+*Vista del procesado en ejecución mostrando barras duales sincronizadas (Lote y Pista actual), análisis acústico en tiempo real (clipping, bitrates reales, duración, silencios) y consola integrada de actividad técnica.*
+
+<p align="center">
+  <img src="docs/images/puretrack_processing.jpg" width="100%" alt="PureTrack Procesando en Tiempo Real">
+</p>
+
+### 2. Panel Inspector Completo (Constructor de Patrones y Reglas Acústicas)
+*Configuración de patrones dinámicos mediante chips interactivos, previsualización en vivo sobre una pista de muestra y controles de umbrales acústicos (clipping, silencios anómalos, cortes abruptos, bitrate mínimo y duración mínima).*
+
+<p align="center">
+  <img src="docs/images/puretrack_inspector.png" width="100%" alt="PureTrack Panel Inspector Completo">
+</p>
+
+### 3. Vista de Biblioteca Optimizada (Tabla Expandida)
+*Panel inspector colapsado para maximizar el área visible de la biblioteca musical, ideal para colecciones masivas de DJ y pantallas panorámicas.*
+
+<p align="center">
+  <img src="docs/images/puretrack_table.png" width="100%" alt="PureTrack Vista Optimizada de Tabla">
+</p>
+
+---
+
 ## Descargas (GitHub Releases)
 
-Los usuarios finales pueden descargar los ejecutables únicos autónomos (`--onefile`) directamente desde la sección **[Releases](../../releases)** de GitHub:
-- **Windows x64:** `PureTrack-Windows-x64.exe` (Ejecutable portable único con FFmpeg y Chromaprint incrustados).
-- **Linux x64:** `PureTrack-Linux-x64` (Binario independiente ELF).
+Los usuarios finales pueden descargar los ejecutables únicos autónomos (`--onefile`) y los paquetes comprimidos directamente desde la sección **[Releases](../../releases)** de GitHub:
 
-No requiere scripts `.bat`, consolas ni dependencias externas; basta con descargar y ejecutar.
+| Archivo Distribuible | Sistema Operativo | Arquitectura | Descripción |
+| :--- | :--- | :--- | :--- |
+| **`PureTrack-Windows-x64.exe`** | Windows 10 / 11 | x86_64 | Ejecutable portable autónomo `.exe` con FFmpeg, FFprobe y Chromaprint incrustados. No requiere instalación. |
+| **`PureTrack-Windows-x64.zip`** | Windows 10 / 11 | x86_64 | Paquete ZIP que contiene el ejecutable único para distribución rápida. |
+| **`PureTrack-Linux-x64`** | Distribuciones Linux | x86_64 | Binario independiente ELF con la suite completa de análisis acústico. |
+| **`PureTrack-Linux-x64.tar.gz`** | Distribuciones Linux | x86_64 | Archivo tarball comprimido para entornos Linux. |
 
 ---
 
@@ -56,6 +102,8 @@ PureTrack/
 ├── .github/
 │   └── workflows/
 │       └── release.yml    # Compilación y publicación automatizada en GitHub Actions
+├── docs/
+│   └── images/            # Capturas de pantalla en alta resolución y diagramas
 ├── core/
 │   ├── auditor.py         # Análisis técnico (FFmpeg, mutagen, clipping, silencios, cortes)
 │   ├── common_utils.py    # Localizador autónomo de binarios, rutas largas (\\?\), saneamiento NTFS, subprocesos ocultos
