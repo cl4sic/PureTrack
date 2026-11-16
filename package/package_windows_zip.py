@@ -94,6 +94,7 @@ def prepare_and_zip():
         (ROOT_DIR / "README_ES.md", DIST_WIN_DIR / "README_ES.md"),
         (win_scripts_dir / "ejecutar_PureTrack.bat", DIST_WIN_DIR / "ejecutar_PureTrack.bat"),
         (win_scripts_dir / "compilar_exe_en_windows.bat", DIST_WIN_DIR / "compilar_exe_en_windows.bat"),
+        (win_scripts_dir / "sign_puretrack.ps1", DIST_WIN_DIR / "sign_puretrack.ps1"),
         (win_scripts_dir / "INSTRUCCIONES_WINDOWS.txt", DIST_WIN_DIR / "INSTRUCCIONES_WINDOWS.txt"),
     ]
 

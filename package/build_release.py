@@ -47,6 +47,13 @@ def build_release(name: str = "PureTrack", mode: str = "onefile", windowed: bool
     sep = ";" if is_windows else ":"
     target_name = name
 
+    # Garantizar presencia de binarios de audio en bin/
+    try:
+        from package.ensure_binaries import main as ensure_binaries_main
+        ensure_binaries_main()
+    except Exception as e:
+        print(f"[!] Aviso al asegurar binarios de audio: {e}")
+
     # Preparar parámetros de PyInstaller optimizados
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -70,6 +77,12 @@ def build_release(name: str = "PureTrack", mode: str = "onefile", windowed: bool
         "--collect-all", "soundfile",
         "--collect-all", "numpy",
     ]
+
+    # Archivo de recursos y metadatos PE para Windows (mitiga SmartScreen de publisher desconocido)
+    version_file = ROOT_DIR / "package" / "version_info.txt"
+    if is_windows and version_file.exists():
+        cmd.extend(["--version-file", str(version_file)])
+        print(f"[+] Aplicando metadatos de versión de Windows: {version_file.name}")
 
     # Icono oficial multiplataforma
     ico_path = ROOT_DIR / "gui" / "assets" / "icon.ico"

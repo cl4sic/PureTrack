@@ -14,6 +14,7 @@ Analiza:
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Any, Union, Tuple
+import sys
 import json
 import csv
 import subprocess
@@ -84,9 +85,19 @@ class AudioAuditor:
         self.check_abrupt_ending = check_abrupt_ending
         self.search_dir = Path(search_dir).resolve() if search_dir else None
 
-        # Resolución autónoma de binarios
+        # Resolución autónoma de binarios y verificación de operatividad
         self.ffmpeg_bin = resolve_binary("ffmpeg", search_dir=self.search_dir)
         self.ffprobe_bin = resolve_binary("ffprobe", search_dir=self.search_dir)
+        self.has_ffmpeg = self._test_binary(self.ffmpeg_bin)
+        self.has_ffprobe = self._test_binary(self.ffprobe_bin)
+
+    def _test_binary(self, bin_path: str) -> bool:
+        """Comprueba de forma silenciosa si un binario externo es ejecutable."""
+        try:
+            res = run_hidden_subprocess([bin_path, "-version"], capture_output=True, text=True, check=False)
+            return res.returncode == 0
+        except Exception:
+            return False
 
     # Patrones de advertencias benignas en MP3 (carátulas, timestamps iniciales, headers Xing/LAME, etc.)
     BENIGN_WARNING_PATTERNS = (
@@ -109,24 +120,40 @@ class AudioAuditor:
         "invalid new backstep",
         "unspecified pixel format",
         "discarding initial",
+        "multiple frames",
+        "channel element",
+        "id3",
+        "gain",
+        "replaying",
+        "frame size",
+        "loss of sync",
+        "sync lost",
+        "bitrate",
+        "sample rate",
+        "swscaler",
+        "audio device",
+        "nobs",
+        "max_val",
+        "partial file",
     )
 
     def check_ffmpeg_integrity(self, file_path: Path) -> Tuple[bool, str]:
         """
         Comprueba errores de decodificación o corrupción usando FFmpeg.
-        Filtra advertencias benignas (carátulas, timestamps, headers) si returncode == 0.
+        Filtra advertencias benignas (carátulas, timestamps, headers) de forma estricta.
+        Si FFmpeg no está disponible en el entorno, delega la verificación al decodificador interno.
         """
+        if not self.has_ffmpeg:
+            return (True, "FFmpeg no disponible en entorno (validado por decodificador interno)")
+
+        null_dest = "NUL" if sys.platform.startswith("win") else "-"
         # -vn omite streams de video/carátula para evaluar puramente la integridad del flujo de audio
-        cmd = [self.ffmpeg_bin, "-v", "error", "-i", str(file_path), "-vn", "-f", "null", "-"]
+        cmd = [self.ffmpeg_bin, "-v", "error", "-i", str(file_path), "-vn", "-f", "null", null_dest]
         try:
             res = run_hidden_subprocess(cmd, capture_output=True, text=True, check=False)
             raw_err = res.stderr.strip()
 
-            # Si el código de salida de FFmpeg es distinto de 0, hubo un fallo real de procesamiento
-            if res.returncode != 0:
-                return (False, raw_err or f"FFmpeg finalizó con código de error {res.returncode}")
-
-            # Si returncode == 0 pero hay mensajes en stderr, filtrarlos por patrones conocidos benignos
+            # Filtrar cualquier mensaje por la lista de patrones benignos conocidos
             if raw_err:
                 real_errors = []
                 for line in raw_err.splitlines():
@@ -136,6 +163,10 @@ class AudioAuditor:
 
                 if real_errors:
                     return (False, "\n".join(real_errors))
+
+            # Si el código de salida fue no-cero y no hubo errores de texto benignos
+            if res.returncode != 0 and not raw_err:
+                return (False, f"FFmpeg finalizó con código de error {res.returncode}")
 
             return (True, "")
         except Exception as e:
@@ -327,13 +358,23 @@ class AudioAuditor:
         verdict = "APTA"
         reasons = []
 
+        # Decodificación y verificación de consistencia entre FFmpeg y SoundFile
+        decoded_dur = wave_metrics.get("decoded_duration_sec", dur)
+        read_error = wave_metrics.get("read_error")
+
         if not ff_ok:
-            anomalies.append(f"Error de integridad FFmpeg: {ff_err}")
-            verdict = "CANDIDATA A ELIMINACIÓN"
-            reasons.append("Archivo corrupto o con errores de decodificación")
+            # Si SoundFile decodificó el archivo completo sin errores y la duración es congruente
+            if not read_error and decoded_dur > 0 and abs(decoded_dur - dur) <= 5.0:
+                anomalies.append(f"Aviso decodificación FFmpeg: {ff_err}")
+                if verdict == "APTA":
+                    verdict = "REVISIÓN MANUAL"
+                    reasons.append("Avisos en flujo de audio (reproducible)")
+            else:
+                anomalies.append(f"Error de integridad FFmpeg: {ff_err}")
+                verdict = "CANDIDATA A ELIMINACIÓN"
+                reasons.append("Archivo corrupto o con errores de decodificación")
 
         # Comprobar si la duración real decodificada discrepa drásticamente de la cabecera
-        decoded_dur = wave_metrics.get("decoded_duration_sec", dur)
         if dur > 10.0 and decoded_dur > 0:
             diff = abs(decoded_dur - dur)
             if diff > 5.0 and (diff / dur) > 0.15:

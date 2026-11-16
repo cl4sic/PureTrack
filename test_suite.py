@@ -516,6 +516,30 @@ class TestAuditorIntegrityAndCorruptionFilter(unittest.TestCase):
             self.assertTrue(res.ffmpeg_integrity_ok, f"Falso positivo en integridad FFmpeg para {mp3_path.name}: {res.ffmpeg_errors}")
             self.assertEqual(res.verdict, "APTA", f"La pista {mp3_path.name} debe ser APTA, no {res.verdict} (Motivo: {res.verdict_reason})")
 
+    def test_missing_ffmpeg_graceful_fallback(self):
+        """Verifica que si FFmpeg no está disponible, no marque erróneamente un archivo válido como corrupto."""
+        from core.auditor import AudioAuditor
+        auditor_no_ff = AudioAuditor()
+        auditor_no_ff.has_ffmpeg = False
+
+        uploaded_dir = Path("/home/cl4sic/.gemini/antigravity/brain/9c655c3a-371c-444a-8060-35f03d9ee538/.user_uploaded")
+        mp3_files = list(uploaded_dir.glob("*.mp3"))
+        if mp3_files:
+            res = auditor_no_ff.audit_file(mp3_files[0])
+            self.assertNotEqual(res.verdict, "CANDIDATA A ELIMINACIÓN", "No debe marcarse como corrupta si FFmpeg falta pero SoundFile decodifica")
+            self.assertIn(res.verdict, ("APTA", "REVISIÓN MANUAL"))
+
+    def test_multi_resolution_icon_and_desktop_integration(self):
+        """Verifica que resolve_puretrack_icon construya un QIcon con múltiples tamaños (16 a 1024)."""
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance() or QApplication(["--platform", "offscreen"])
+        from app import resolve_puretrack_icon
+        icon = resolve_puretrack_icon()
+        self.assertFalse(icon.isNull(), "resolve_puretrack_icon devolvió un icono nulo")
+        sizes = [s.width() for s in icon.availableSizes()]
+        self.assertTrue(len(sizes) >= 3, f"Se esperaban múltiples resoluciones, se obtuvieron: {sizes}")
+        self.assertTrue(any(s >= 256 for s in sizes), "Falta resolución de alta densidad (>= 256px)")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

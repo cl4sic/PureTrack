@@ -163,7 +163,8 @@ class AuditWorker(BaseAudioWorker):
                 processed += 1
 
                 level = "SUCCESS" if res.verdict == "APTA" else ("WARNING" if res.verdict == "REVISIÓN MANUAL" else "ERROR")
-                self.sig_log.emit(level, f"[{res.verdict}] {fpath.name} | {res.mutagen_bitrate_kbps} kbps ({res.bitrate_mode}) | {res.duration_sec}s | Clipping: {res.clipping_pct}%")
+                reason_suffix = f" — {res.verdict_reason}" if res.verdict != "APTA" else ""
+                self.sig_log.emit(level, f"[{res.verdict}] {fpath.name} | {res.mutagen_bitrate_kbps} kbps ({res.bitrate_mode}) | {res.duration_sec}s | Clipping: {res.clipping_pct}%{reason_suffix}")
             except Exception as e:
                 self.sig_log.emit("ERROR", f"Error auditando {fpath.name}: {e}")
 

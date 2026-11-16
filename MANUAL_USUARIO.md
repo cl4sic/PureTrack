@@ -180,3 +180,17 @@ R: **No.** PureTrack únicamente actualiza las etiquetas ID3v2 y el nombre del a
 
 **P: ¿Qué ocurre con las portadas o carátulas existentes en las canciones?**  
 R: Se preservan íntegramente. El módulo de etiquetado respeta todos los marcos `APIC` existentes.
+
+**P: Al ejecutar `PureTrack.exe` o el instalador en Windows, aparece la advertencia azul *"Windows protegió su PC / Microsoft Defender SmartScreen impidió el inicio de una aplicación no reconocida"*. ¿Es seguro?**  
+R: **Sí, es 100% seguro.** Microsoft Defender SmartScreen muestra automáticamente este aviso preventivo para cualquier ejecutable nuevo de código abierto descargado de Internet que no cuente con un certificado digital de pago extendido (EV de más de 400€/año) o que aún no haya acumulado miles de descargas en la telemetría de Microsoft.
+
+**Cómo ejecutarlo en 2 clics:**
+1. En la ventana azul de SmartScreen, haz clic en el enlace subrayado **"Más información"** (*More info*).
+2. Aparecerá el botón **"Ejecutar de todas formas"** (*Run anyway*). Haz clic en él y PureTrack se abrirá normalmente.
+3. *Alternativa permanente:* Haz clic derecho sobre `PureTrack.exe` (o el archivo `.zip`) $\rightarrow$ **Propiedades** $\rightarrow$ en la pestaña *General* marca la casilla **"Desbloquear"** (*Unblock*) abajo a la derecha $\rightarrow$ pulsa **Aceptar**.
+
+**P: ¿Cómo firmar el ejecutable localmente para que Windows no muestre "Editor desconocido"?**  
+R: Hemos incluido un script PowerShell automatizado en `package/windows_scripts/sign_puretrack.ps1`. Al ejecutarlo, genera un certificado de confianza local y firma digitalmente `PureTrack.exe` con SHA-256 y marca de tiempo RFC 3161.
+
+**P: ¿Cómo funciona el icono de PureTrack en Linux (Wayland y X11)?**  
+R: Al iniciarse, PureTrack registra automáticamente la entrada de escritorio `puretrack.desktop` en `~/.local/share/applications/` y el icono oficial en `~/.local/share/icons/hicolor/256x256/apps/`. Además, el binario exporta un conjunto de pixmaps multi-resolución (16x16 a 1024x1024) para que la barra de tareas, el dock (GNOME / KDE / XFCE) y el selector Alt+Tab muestren siempre el icono nítido del vinilo.

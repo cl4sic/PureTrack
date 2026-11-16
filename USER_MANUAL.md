@@ -195,3 +195,17 @@ A: **No.** PureTrack performs lossless metadata tagging and filesystem renaming.
 
 **Q: Are existing album covers preserved?**  
 A: **Yes.** PureTrack specifically preserves all existing `APIC` (Attached Picture) frames when updating ID3v2 tags.
+
+**Q: When opening `PureTrack.exe` on Windows, a blue screen warns: *"Windows protected your PC / Microsoft Defender SmartScreen prevented an unrecognised app from starting"*. Is it safe?**  
+A: **Yes, it is 100% safe.** Microsoft Defender SmartScreen flags newly downloaded open-source binaries that do not have an expensive commercial EV certificate ($400+/year) and have not yet built up thousands of cloud telemetry reputation reports.
+
+**How to open in 2 clicks:**
+1. In the blue SmartScreen popup, click the underlined link: **"More info"**.
+2. A button named **"Run anyway"** will appear. Click it, and PureTrack will launch immediately.
+3. *Permanent fix:* Right-click `PureTrack.exe` (or the downloaded `.zip`) $\rightarrow$ **Properties** $\rightarrow$ at the bottom of the *General* tab, check **"Unblock"** $\rightarrow$ click **OK**.
+
+**Q: How can I digitally sign the Windows executable locally to eliminate "Unknown publisher"?**  
+A: Run the included PowerShell helper script `package/windows_scripts/sign_puretrack.ps1`. It creates a local trusted code signing certificate and applies a SHA-256 Authenticode signature with RFC 3161 timestamping to `PureTrack.exe`.
+
+**Q: How does the application icon work on Linux (Wayland and X11)?**  
+A: On launch, PureTrack automatically registers `puretrack.desktop` in `~/.local/share/applications/` and the high-res icon in `~/.local/share/icons/hicolor/256x256/apps/`. Furthermore, it populates `_NET_WM_ICON` with all standard resolutions (16x16 up to 1024x1024) ensuring the dock, taskbar, and Alt+Tab switcher display the crisp vinyl icon across GNOME, KDE, and XFCE.

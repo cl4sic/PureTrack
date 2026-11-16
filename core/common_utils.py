@@ -186,6 +186,7 @@ def run_hidden_subprocess(cmd: Union[List[str], str], **kwargs) -> subprocess.Co
     """
     Ejecuta un subproceso de forma silenciosa garantizando que en Windows
     no aparezca ninguna ventana de consola negra parpadeante (cmd.exe).
+    Garantiza codificación UTF-8 con reemplazo de caracteres para prevenir UnicodeDecodeError en Windows.
     """
     hidden_kwargs = get_hidden_subprocess_kwargs()
     if "creationflags" in kwargs and "creationflags" in hidden_kwargs:
@@ -195,5 +196,11 @@ def run_hidden_subprocess(cmd: Union[List[str], str], **kwargs) -> subprocess.Co
 
     if "startupinfo" not in kwargs and "startupinfo" in hidden_kwargs:
         kwargs["startupinfo"] = hidden_kwargs["startupinfo"]
+
+    if kwargs.get("text") or kwargs.get("universal_newlines"):
+        if "encoding" not in kwargs:
+            kwargs["encoding"] = "utf-8"
+        if "errors" not in kwargs:
+            kwargs["errors"] = "replace"
 
     return subprocess.run(cmd, **kwargs)

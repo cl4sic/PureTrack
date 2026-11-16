@@ -155,24 +155,14 @@ class MainWindow(QMainWindow):
         self._load_initial_directory()
 
     def _set_app_icon(self):
-        """Asigna el icono oficial PureTrack a la ventana."""
-        candidates = [
-            Path(__file__).resolve().parent / "assets" / "icon.ico",
-            Path(__file__).resolve().parent / "assets" / "icon.png",
-            Path(__file__).resolve().parent.parent / "gui" / "assets" / "icon.ico",
-            Path(__file__).resolve().parent.parent / "gui" / "assets" / "icon.png",
-        ]
-        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-            meipass = Path(sys._MEIPASS)
-            candidates.insert(0, meipass / "gui" / "assets" / "icon.ico")
-            candidates.insert(1, meipass / "gui" / "assets" / "icon.png")
-
-        for c in candidates:
-            if c.exists():
-                icon = QIcon(str(c))
-                if not icon.isNull():
-                    self.setWindowIcon(icon)
-                    break
+        """Asigna el icono oficial multi-resolución de PureTrack a la ventana."""
+        try:
+            from app import resolve_puretrack_icon
+            icon = resolve_puretrack_icon()
+            if not icon.isNull():
+                self.setWindowIcon(icon)
+        except Exception:
+            pass
 
     def _init_ui(self):
         central_widget = QWidget()
@@ -655,7 +645,14 @@ class MainWindow(QMainWindow):
 
         # Acción / Veredicto
         if not data.get("has_custom_name"):
-            self.table.setItem(row, self.COL_ACTION, QTableWidgetItem(res.verdict_reason[:35] + ("..." if len(res.verdict_reason) > 35 else "")))
+            action_text = res.verdict_reason[:35] + ("..." if len(res.verdict_reason) > 35 else "")
+            item_act = QTableWidgetItem(action_text)
+            tooltip_lines = [f"[{res.verdict}] {res.verdict_reason}"]
+            if res.anomalies:
+                tooltip_lines.append("")
+                tooltip_lines.extend(res.anomalies)
+            item_act.setToolTip("\n".join(tooltip_lines))
+            self.table.setItem(row, self.COL_ACTION, item_act)
         else:
             item_act = QTableWidgetItem(t("table.action_custom"))
             item_act.setForeground(QColor("#00b4d8"))
