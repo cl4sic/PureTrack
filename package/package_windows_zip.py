@@ -111,6 +111,15 @@ def prepare_and_zip():
             shutil.copytree(src_f, dst_f, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.spec"))
             print(f"[+] Copiada carpeta: {folder}/")
 
+    # Si existe un ejecutable precompilado en dist/, incluirlo directamente en el paquete
+    dist_dir = ROOT_DIR / "dist"
+    for exe_candidate in ["PureTrack.exe", "PureTrack-Windows-x64.exe"]:
+        src_exe = dist_dir / exe_candidate
+        if src_exe.exists():
+            shutil.copy2(src_exe, DIST_WIN_DIR / "PureTrack.exe")
+            print(f"[+] Incluido ejecutable compilado en el paquete ZIP: {exe_candidate} -> PureTrack.exe")
+            break
+
     # 3. Aplicar conversión CRLF rigurosa a todos los archivos de texto
     print("\n[*] Aplicando conversión estricta a CRLF (\\r\\n) para compatibilidad con cmd.exe:")
     converted_count = 0

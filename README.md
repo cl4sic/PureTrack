@@ -67,7 +67,7 @@ For end users, standalone single-file executables (`--onefile`) and ready-to-use
 | Distribution File | Operating System | Architecture | Description |
 | :--- | :--- | :--- | :--- |
 | **`PureTrack-Windows-x64.exe`** | Windows 10 / 11 | x86_64 | Standalone portable `.exe` with embedded FFmpeg, FFprobe & Chromaprint. No installation required. |
-| **`PureTrack-Windows-x64.zip`** | Windows 10 / 11 | x86_64 | Compressed standalone executable archive for fast distribution. |
+| **`PureTrack_Windows.zip`** | Windows 10 / 11 | x86_64 | Complete Windows distribution suite: pre-built executable, launch batch scripts, audio toolchain, docs & tools. |
 | **`PureTrack-Linux-x64`** | Linux Distributions | x86_64 | Standalone ELF binary with embedded audio analysis toolchain. |
 | **`PureTrack-Linux-x64.tar.gz`** | Linux Distributions | x86_64 | Compressed tarball distribution for Linux environments. |
 

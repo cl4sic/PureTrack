@@ -67,7 +67,7 @@ Los usuarios finales pueden descargar los ejecutables únicos autónomos (`--one
 | Archivo Distribuible | Sistema Operativo | Arquitectura | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`PureTrack-Windows-x64.exe`** | Windows 10 / 11 | x86_64 | Ejecutable portable autónomo `.exe` con FFmpeg, FFprobe y Chromaprint incrustados. No requiere instalación. |
-| **`PureTrack-Windows-x64.zip`** | Windows 10 / 11 | x86_64 | Paquete ZIP que contiene el ejecutable único para distribución rápida. |
+| **`PureTrack_Windows.zip`** | Windows 10 / 11 | x86_64 | Suite completa de distribución para Windows: ejecutable precompilado, scripts de inicio .bat, binarios de audio, manuales y herramientas. |
 | **`PureTrack-Linux-x64`** | Distribuciones Linux | x86_64 | Binario independiente ELF con la suite completa de análisis acústico. |
 | **`PureTrack-Linux-x64.tar.gz`** | Distribuciones Linux | x86_64 | Archivo tarball comprimido para entornos Linux. |
 

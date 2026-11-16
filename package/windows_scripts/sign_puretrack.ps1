@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Firma digitalmente los ejecutables de PureTrack para Windows con un certificado Code Signing.
 

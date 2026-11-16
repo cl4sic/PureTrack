@@ -43,21 +43,30 @@ jobs:
           
           New-Item -ItemType Directory -Force -Path bin | Out-Null
           
-          # 1. Localizar o instalar FFmpeg y FFprobe
-          $ffmpegCmd = Get-Command ffmpeg -ErrorAction SilentlyContinue
-          $ffprobeCmd = Get-Command ffprobe -ErrorAction SilentlyContinue
-          
-          if (-not ($ffmpegCmd -and $ffprobeCmd)) {
-              Write-Host "FFmpeg no detectado en PATH, instalando mediante Chocolatey..."
-              choco install ffmpeg -y --no-progress
-              $ffmpegCmd = Get-Command ffmpeg
-              $ffprobeCmd = Get-Command ffprobe
+          # 1. Localizar binarios reales de FFmpeg y FFprobe (>10MB, evitando shims de Chocolatey)
+          Write-Host "Localizando binarios completos de FFmpeg y FFprobe..."
+          $realFFmpeg = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\ffmpeg" -Recurse -Filter "ffmpeg.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 10MB } | Select-Object -First 1
+          $realFFprobe = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\ffmpeg" -Recurse -Filter "ffprobe.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 10MB } | Select-Object -First 1
+
+          if (-not ($realFFmpeg -and $realFFprobe)) {
+              Write-Host "Descargando FFmpeg completo desde GitHub Releases (BtbN/FFmpeg-Builds)..."
+              $ffmpegZip = "$env:TEMP\ffmpeg_full.zip"
+              curl.exe -sSL --retry 5 --connect-timeout 25 -o $ffmpegZip "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+              $ffmpegExtract = "$env:TEMP\ffmpeg_extracted"
+              New-Item -ItemType Directory -Force -Path $ffmpegExtract | Out-Null
+              tar.exe -xf $ffmpegZip -C $ffmpegExtract
+              $realFFmpeg = Get-ChildItem -Path $ffmpegExtract -Recurse -Filter "ffmpeg.exe" | Where-Object { $_.Length -gt 10MB } | Select-Object -First 1
+              $realFFprobe = Get-ChildItem -Path $ffmpegExtract -Recurse -Filter "ffprobe.exe" | Where-Object { $_.Length -gt 10MB } | Select-Object -First 1
           }
-          
-          Write-Host "Copiando FFmpeg desde: $($ffmpegCmd.Source)"
-          Copy-Item -Path $ffmpegCmd.Source -Destination "bin\ffmpeg.exe" -Force
-          Write-Host "Copiando FFprobe desde: $($ffprobeCmd.Source)"
-          Copy-Item -Path $ffprobeCmd.Source -Destination "bin\ffprobe.exe" -Force
+
+          if (-not ($realFFmpeg -and $realFFprobe)) {
+              throw "No se pudieron obtener binarios reales de FFmpeg (>10MB)."
+          }
+
+          Write-Host "Copiando FFmpeg real ($(($realFFmpeg.Length / 1MB).ToString('F1')) MB) a bin\ffmpeg.exe..."
+          Copy-Item -Path $realFFmpeg.FullName -Destination "bin\ffmpeg.exe" -Force
+          Write-Host "Copiando FFprobe real ($(($realFFprobe.Length / 1MB).ToString('F1')) MB) a bin\ffprobe.exe..."
+          Copy-Item -Path $realFFprobe.FullName -Destination "bin\ffprobe.exe" -Force
 
           # 2. Descargar fpcalc (Chromaprint x64) usando curl nativo
           Write-Host "Descargando fpcalc desde AcoustID..."
@@ -87,12 +96,12 @@ jobs:
         run: |
           python package/build_release.py --name PureTrack-Windows-x64 --mode onefile
 
-      - name: Package Windows ZIP Distribution
+      - name: Package Windows ZIP Distribution (Full Suite PureTrack_Windows.zip)
         shell: pwsh
         run: |
-          Compress-Archive -Path dist\PureTrack-Windows-x64.exe -DestinationPath dist\PureTrack-Windows-x64.zip -Force
-          Write-Host "ZIP generado con éxito:"
-          Get-Item dist\PureTrack-Windows-x64.zip
+          python package/package_windows_zip.py
+          Write-Host "PureTrack_Windows.zip generado con éxito:"
+          Get-Item PureTrack_Windows.zip
 
       - name: Upload Windows Binary Artifacts
         uses: actions/upload-artifact@v4
@@ -100,7 +109,7 @@ jobs:
           name: PureTrack-Windows-x64
           path: |
             dist/PureTrack-Windows-x64.exe
-            dist/PureTrack-Windows-x64.zip
+            PureTrack_Windows.zip
 
   build-linux:
     name: Build Standalone Linux Executable
@@ -191,7 +200,7 @@ jobs:
         with:
           files: |
             artifacts/PureTrack-Windows-x64.exe
-            artifacts/PureTrack-Windows-x64.zip
+            artifacts/PureTrack_Windows.zip
             artifacts/PureTrack-Linux-x64
             artifacts/PureTrack-Linux-x64.tar.gz
           name: PureTrack ${{ steps.vars.outputs.tag }}
